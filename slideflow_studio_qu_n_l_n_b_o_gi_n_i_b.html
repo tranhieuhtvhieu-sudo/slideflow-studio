@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SlideFlow Studio v3 — Quản lý Đơn & Báo giá Nội bộ</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f6fb;
+      color: #0f172a;
+    }
+    /* Custom scrollbar for clean UI */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    /* Pulse animation for LIVE indicator and urgent radar */
+    @keyframes softPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.55; transform: scale(1.15); }
+    }
+    .animate-soft-pulse {
+      animation: softPulse 2s infinite ease-in-out;
+    }
+    /* Screenshot mode highlight */
+    .screenshot-frame {
+      box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.18);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
+
+  <!-- ==================== TOAST NOTIFICATION CONTAINER ==================== -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- ==================== PIN LOCK SCREEN (DEFAULT: 2011) ==================== -->
+  <div id="pin-lock-screen" class="fixed inset-0 z-40 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 sm:p-8 text-center border border-slate-100">
+      <div class="w-16 h-16 rounded-2xl bg-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
+        SF
+      </div>
+      <h1 class="text-xl font-extrabold text-slate-900">SlideFlow Studio <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full align-middle">v3</span></h1>
+      <p class="text-sm text-slate-500 mt-1 mb-6">Nhập mã PIN nội bộ để truy cập hệ thống điều phối & báo giá</p>
+
+      <!-- PIN Dots -->
+      <div id="pin-dots" class="flex justify-center gap-3 mb-5">
+        <span class="w-4 h-4 rounded-full border-2 border-slate-300 transition-all"></span>
+        <span class="w-4 h-4 rounded-full border-2 border-slate-300 transition-all"></span>
+        <span class="w-4 h-4 rounded-full border-2 border-slate-300 transition-all"></span>
+        <span class="w-4 h-4 rounded-full border-2 border-slate-300 transition-all"></span>
+      </div>
+
+      <p id="pin-error-msg" class="text-xs font-semibold text-rose-600 h-4 mb-3"></p>
+
+      <!-- Numeric Keypad -->
+      <div class="grid grid-cols-3 gap-2.5 max-w-[260px] mx-auto">
+        <button type="button" onclick="enterPinDigit('1')" class="pin-btn h-12 rounded-2xl bg-slate-100 hover:bg-indigo-50 active:bg-indigo-100 text-slate-800 font-bold text-lg transition">1</button>
+        <button type="button" onclick="enterPinDigit('2')" class="pin-btn h-12 rounded-2xl bg-slate-100 hover:bg-indigo-50 active:bg-indigo-100 text-slate-800 font-bold text-lg transition">2</button>
+        <button type="button" onclick="enterPinDigit('3')" class="pin-btn h-12 rounded-2xl bg-slate-100 hover:bg-indigo-50 active:bg-indigo-100 text-slate-800 font-bold text-lg transition">3</button>
+        <button type="button" onclick="enterPinDigit('4')" class="pin-btn h-12 rounded-2xl bg-slate-100 hover:bg-indigo-50 active:bg-indigo-100 text-slate-800 font-bold text-lg transition">4</button>
+        <button type="button" onclick="enterPinDigit('5')" class="pin-btn h-12 rounded-2xl bg-slate-100 hover:bg-indigo-50 active:bg-indigo-100 text-slate-800 font-bold text-lg transition">5</button>
+        <button type="button" onclick="enterPinDigit('6')" class="pin-btn h-12 rounded-2xl bg-slate-100 hover:bg-indigo-50 active:bg-indigo-100 text-slate-800 font-bold text-lg transition">6</button>
+        <button type="button" onclick="enterPinDigit('7')" class="pin-btn h-12 rounded-2xl bg-slate-100 hover:bg-indigo-50 active:bg-indigo-100 text-slate-800 font-bold text-lg transition">7</button>
+        <button type="button" onclick="enterPinDigit('8')" class="pin-btn h-12 rounded-2xl bg-slate-100 hover:bg-indigo-50 active:bg-indigo-100 text-slate-800 font-bold text-lg transition">8</button>
+        <button type="button" onclick="enterPinDigit('9')" class="pin-btn h-12 rounded-2xl bg-slate-100 hover:bg-indigo-50 active:bg-indigo-100 text-slate-800 font-bold text-lg transition">9</button>
+        <button type="button" onclick="clearPinInput()" class="h-12 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-xs transition">Xóa</button>
+        <button type="button" onclick="enterPinDigit('0')" class="pin-btn h-12 rounded-2xl bg-slate-100 hover:bg-indigo-50 active:bg-indigo-100 text-slate-800 font-bold text-lg transition">0</button>
+        <button type="button" onclick="backspacePin()" class="h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition"><i class="fa-solid fa-delete-left"></i></button>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-5">Gợi ý: Có thể gõ phím số trực tiếp trên bàn phím</p>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN APPLICATION WRAPPER ==================== -->
+  <div id="main-app" class="hidden flex-1 flex flex-col max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
+
+    <!-- TOP HEADER -->
+    <header class="bg-white rounded-3xl shadow-sm border border-slate-200/70 p-4 sm:px-6 sm:py-4 mb-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-indigo-600 text-white font-extrabold text-lg flex items-center justify-center shadow-md shadow-indigo-200 shrink-0">
+            SF
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">SlideFlow Studio</h1>
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-700">v3 LIVE</span>
+              <span class="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                <i class="fa-solid fa-wallet text-sky-600"></i> ZaloPay: 0348107225
+              </span>
+            </div>
+            <p id="current-date-display" class="text-xs text-slate-500 mt-0.5">Đang tải ngày giờ...</p>
+          </div>
+        </div>
+
+        <!-- Mobile Lock Button -->
+        <button type="button" onclick="lockApp()" title="Khóa màn hình" class="lg:hidden p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+          <i class="fa-solid fa-lock"></i>
+        </button>
+      </div>
+
+      <!-- Status & Action Controls -->
+      <div class="flex items-center flex-wrap gap-2.5 justify-between sm:justify-end">
+        <!-- Live Sync Status Pill -->
+        <div id="sync-status-pill" class="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-600">
+          <span id="sync-dot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+          <span id="sync-label">LIVE | Chưa đồng bộ</span>
+        </div>
+
+        <!-- Notification Bell -->
+        <button type="button" onclick="toggleRadarDrawer()" class="relative p-2.5 rounded-2xl bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-700 border border-slate-200/80 transition" title="Cảnh báo đơn sắp tới hạn">
+          <i class="fa-regular fa-bell text-base"></i>
+          <span id="radar-badge-count" class="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[11px] font-bold flex items-center justify-center shadow">0</span>
+        </button>
+
+        <!-- Manual Sync Now -->
+        <button type="button" onclick="syncFromGoogleSheet(false)" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-xs sm:text-sm font-bold shadow-sm shadow-emerald-200 transition">
+          <i id="sync-icon" class="fa-solid fa-rotate"></i>
+          <span>Đồng bộ</span>
+        </button>
+
+        <!-- New Order Quick Button -->
+        <button type="button" onclick="openOrderModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white text-xs sm:text-sm font-bold shadow-sm shadow-indigo-200 transition">
+          <i class="fa-solid fa-plus"></i>
+          <span>Thêm đơn</span>
+        </button>
+
+        <!-- Desktop Lock Button -->
+        <button type="button" onclick="lockApp()" title="Khóa PIN" class="hidden lg:inline-flex items-center justify-center p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition">
+          <i class="fa-solid fa-lock"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="flex items-center gap-2 overflow-x-auto pb-2 mb-5 no-scrollbar">
+      <button type="button" id="tab-btn-orders" onclick="switchTab('orders')" class="tab-btn flex items-center gap-2 px-4 sm:px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition bg-indigo-600 text-white shadow-md shadow-indigo-200">
+        <i class="fa-solid fa-clipboard-list"></i>
+        <span>Điều phối & Radar Hạn</span>
+      </button>
+      <button type="button" id="tab-btn-quote" onclick="switchTab('quote')" class="tab-btn flex items-center gap-2 px-4 sm:px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        <span>Tạo Báo Giá Khách</span>
+      </button>
+      <button type="button" id="tab-btn-settings" onclick="switchTab('settings')" class="tab-btn flex items-center gap-2 px-4 sm:px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80">
+        <i class="fa-solid fa-gear"></i>
+        <span>Bảng Giá & Kết Nối Form</span>
+      </button>
+    </nav>
+
+    <!-- ==================== TAB 1: ĐIỀU PHỐI & RADAR HẠN ==================== -->
+    <section id="tab-orders" class="space-y-5">
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/70 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Đơn đang chạy</span>
+            <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm"><i class="fa-solid fa-layer-group"></i></span>
+          </div>
+          <p id="kpi-active-orders" class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">0</p>
+          <p class="text-[11px] text-slate-400 mt-1">Chưa bàn giao hoàn tất</p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-rose-200/80 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-rose-600">Radar Hạn (&lt; 12h)</span>
+            <span class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-sm"><i class="fa-solid fa-stopwatch animate-soft-pulse"></i></span>
+          </div>
+          <p id="kpi-urgent-orders" class="text-2xl sm:text-3xl font-extrabold text-rose-600 mt-2">0</p>
+          <p class="text-[11px] text-rose-400 mt-1">Cần ưu tiên xử lý ngay</p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/70 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Chờ thu tiền</span>
+            <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm"><i class="fa-solid fa-coins"></i></span>
+          </div>
+          <p id="kpi-unpaid-amount" class="text-xl sm:text-2xl font-extrabold text-amber-600 mt-2">0đ</p>
+          <p class="text-[11px] text-slate-400 mt-1">Công nợ khách chưa thanh toán</p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/70 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Tổng doanh thu</span>
+            <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><i class="fa-solid fa-chart-line"></i></span>
+          </div>
+          <p id="kpi-total-revenue" class="text-xl sm:text-2xl font-extrabold text-emerald-600 mt-2">0đ</p>
+          <p class="text-[11px] text-slate-400 mt-1">Tổng giá trị các đơn hiện có</p>
+        </div>
+      </div>
+
+      <!-- Deadline Radar Alert Banner -->
+      <div id="radar-banner" class="hidden bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 border border-rose-200 rounded-3xl p-4 sm:p-5 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow">
+              <i class="fa-solid fa-radar"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-rose-900">Radar Cảnh Báo Sắp Tới Hạn / Quá Hạn</h3>
+              <p id="radar-banner-text" class="text-xs text-rose-700 mt-0.5">Có đơn hàng cần bàn giao gấp trong vài giờ tới.</p>
+            </div>
+          </div>
+          <button type="button" onclick="filterOrdersByUrgent()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold whitespace-nowrap self-start sm:self-center transition">
+            Lọc đơn gấp ngay
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter & Search Bar -->
+      <div class="bg-white rounded-3xl p-4 border border-slate-200/70 shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input id="order-search-input" type="text" oninput="renderOrders()" placeholder="Tìm theo tên khách, mã đơn, chủ đề slide, SĐT..." class="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition" />
+        </div>
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          <select id="order-status-filter" onchange="renderOrders()" class="px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="ALL">Tất cả trạng thái</option>
+            <option value="URGENT">🔥 Sắp tới hạn (&lt;12h)</option>
+            <option value="Mới tiếp nhận">🆕 Mới tiếp nhận</option>
+            <option value="Đang làm">🎨 Đang làm</option>
+            <option value="Gửi nháp">👀 Gửi nháp</option>
+            <option value="Chờ thanh toán">💳 Chờ thanh toán</option>
+            <option value="Hoàn thành">✅ Hoàn thành</option>
+          </select>
+          <select id="order-sort-select" onchange="renderOrders()" class="px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="DEADLINE_ASC">Sắp xếp: Hạn gần nhất</option>
+            <option value="NEWEST">Sắp xếp: Mới nhất</option>
+            <option value="AMOUNT_DESC">Sắp xếp: Giá trị cao nhất</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Orders Grid -->
+      <div id="orders-list-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <!-- Rendered dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: TẠO BÁO GIÁ KHÁCH & ZALOPAY QR ==================== -->
+    <section id="tab-quote" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- LEFT COLUMN: QUOTE BUILDER & PAYMENT SETTINGS (7 cols) -->
+        <div id="quote-controls-panel" class="lg:col-span-7 space-y-5">
+
+          <!-- Quick Load from Existing Order -->
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/70 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 class="text-base sm:text-lg font-extrabold text-slate-900">1. Thông tin Đơn & Tính Giá Tự Động</h2>
+                <p class="text-xs text-slate-500">Chọn nhanh đơn có sẵn hoặc nhập trực tiếp bên dưới</p>
+              </div>
+              <select id="quote-load-order-select" onchange="loadOrderIntoQuote(this.value)" class="px-3.5 py-2 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-xs">
+                <option value="">-- Chọn đơn từ danh sách --</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Mã đơn hàng</label>
+                <input id="q-order-code" type="text" value="SF-101" oninput="updateQuotePreview()" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Tên khách hàng</label>
+                <input id="q-customer-name" type="text" value="Minh Anh" oninput="updateQuotePreview()" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-bold text-slate-600 mb-1">Chủ đề / Yêu cầu thiết kế</label>
+                <input id="q-topic" type="text" value="Thuyết trình Marketing Chiến lược số" oninput="updateQuotePreview()" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Đối tượng áp dụng giá</label>
+                <select id="q-tier" onchange="updateQuotePreview()" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="student">Học sinh (2.000đ/slide)</option>
+                  <option value="uni" selected>Sinh viên / Giáo viên (5.000đ/slide)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Số lượng Slide</label>
+                <input id="q-slide-count" type="number" min="1" value="15" oninput="updateQuotePreview()" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Hạn bàn giao (Deadline)</label>
+                <input id="q-deadline-text" type="text" value="20:00 Hôm nay" oninput="updateQuotePreview()" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Đã đặt cọc (VNĐ)</label>
+                <input id="q-deposit" type="number" min="0" step="1000" value="0" oninput="updateQuotePreview()" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+            </div>
+
+            <!-- Add-ons Checkboxes -->
+            <div class="mt-4 pt-4 border-t border-slate-100">
+              <span class="block text-xs font-bold text-slate-600 mb-2.5">Phụ phí dịch vụ bổ sung:</span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <label class="flex items-center gap-2.5 p-2.5 rounded-2xl bg-slate-50 hover:bg-indigo-50/60 border border-slate-200/80 cursor-pointer transition">
+                  <input id="addon-express" type="checkbox" onchange="updateQuotePreview()" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" />
+                  <span class="text-xs font-semibold text-slate-700">Gói Siêu tốc (&lt;6h) <span id="lbl-addon-express" class="text-indigo-600 font-bold">+15.000đ</span></span>
+                </label>
+                <label class="flex items-center gap-2.5 p-2.5 rounded-2xl bg-slate-50 hover:bg-indigo-50/60 border border-slate-200/80 cursor-pointer transition">
+                  <input id="addon-urgent" type="checkbox" onchange="updateQuotePreview()" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" />
+                  <span class="text-xs font-semibold text-slate-700">Gói Gấp (&lt;24h) <span id="lbl-addon-urgent" class="text-indigo-600 font-bold">+10.000đ</span></span>
+                </label>
+                <label class="flex items-center gap-2.5 p-2.5 rounded-2xl bg-slate-50 hover:bg-indigo-50/60 border border-slate-200/80 cursor-pointer transition">
+                  <input id="addon-content" type="checkbox" onchange="updateQuotePreview()" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" />
+                  <span class="text-xs font-semibold text-slate-700">Biên tập nội dung <span id="lbl-addon-content" class="text-indigo-600 font-bold">+10.000đ</span></span>
+                </label>
+                <label class="flex items-center gap-2.5 p-2.5 rounded-2xl bg-slate-50 hover:bg-indigo-50/60 border border-slate-200/80 cursor-pointer transition">
+                  <input id="addon-animation" type="checkbox" onchange="updateQuotePreview()" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" />
+                  <span class="text-xs font-semibold text-slate-700">Hiệu ứng nâng cao <span id="lbl-addon-animation" class="text-indigo-600 font-bold">+10.000đ</span></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Discount & Note -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-3.5">
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Giảm giá / Ưu đãi (VNĐ)</label>
+                <input id="q-discount" type="number" min="0" step="1000" value="0" oninput="updateQuotePreview()" class="w-full px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold text-rose-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Ghi chú hiển thị trên thẻ</label>
+                <input id="q-note" type="text" value="Hỗ trợ chỉnh sửa miễn phí 2 lần sau khi gửi nháp." oninput="updateQuotePreview()" class="w-full px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Default Payment Receiver Card (Pre-configured ZaloPay 0348107225 - NGUYEN VAN BAC) -->
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-sky-200 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center font-extrabold text-sm">
+                  <i class="fa-solid fa-qrcode"></i>
+                </div>
+                <div>
+                  <h2 class="text-base font-extrabold text-slate-900">2. Tài khoản Nhận tiền Mặc định</h2>
+                  <p class="text-xs text-slate-500">Đã cài sẵn ZaloPay của shop, có thể đổi ngân hàng hoặc tải ảnh QR cá nhân</p>
+                </div>
+              </div>
+              <button type="button" onclick="resetDefaultZaloPay()" class="text-xs font-bold text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-xl transition self-start sm:self-center">
+                Khôi phục ZaloPay gốc
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Ngân hàng / Ví</label>
+                <select id="pay-bank-code" onchange="handlePaymentInfoChange()" class="w-full px-3 py-2.5 rounded-2xl bg-sky-50/60 border border-sky-200 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                  <option value="zalopay" selected>Ví ZaloPay (970454)</option>
+                  <option value="MB">MB Bank (Quân Đội)</option>
+                  <option value="VCB">Vietcombank</option>
+                  <option value="TCB">Techcombank</option>
+                  <option value="BIDV">BIDV</option>
+                  <option value="ACB">ACB</option>
+                  <option value="VPB">VPBank</option>
+                  <option value="TPB">TPBank</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Số tài khoản / SĐT</label>
+                <input id="pay-account-no" type="text" value="0348107225" oninput="handlePaymentInfoChange()" class="w-full px-3.5 py-2.5 rounded-2xl bg-sky-50/60 border border-sky-200 text-sm font-extrabold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Tên chủ tài khoản</label>
+                <input id="pay-account-name" type="text" value="NGUYEN VAN BAC" oninput="handlePaymentInfoChange()" class="w-full px-3.5 py-2.5 rounded-2xl bg-sky-50/60 border border-sky-200 text-sm font-extrabold uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              </div>
+            </div>
+
+            <!-- Upload Personal QR Image (e.g., Tiger ZaloPay QR) -->
+            <div class="mt-4 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="text-xs text-slate-600">
+                <span class="font-bold text-slate-800">Ảnh QR cá nhân (Con hổ ZaloPay / Ảnh riêng):</span>
+                <span id="custom-qr-status-text" class="text-slate-500 block sm:inline sm:ml-1">Chưa tải ảnh riêng (đang dùng VietQR tự động)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+                  <i class="fa-solid fa-upload"></i>
+                  <span>Tải ảnh QR của shop</span>
+                  <input id="custom-qr-file-input" type="file" accept="image/*" onchange="handleCustomQrUpload(event)" class="hidden" />
+                </label>
+                <button id="btn-remove-custom-qr" type="button" onclick="removeCustomQrImage()" class="hidden px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition">
+                  Xóa ảnh
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Zalo Quick-Copy Message Templates -->
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/70 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h2 class="text-base font-extrabold text-slate-900">3. Bộ 4 Mẫu Tin Nhắn Zalo Copy Nhanh</h2>
+                <p class="text-xs text-slate-500">Tự động chèn sẵn tên khách, tổng tiền & thông tin chuyển khoản ZaloPay</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 text-[11px] font-bold">Zalo Ready</span>
+            </div>
+
+            <!-- Template Tabs -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+              <button type="button" onclick="selectZaloTemplate('confirm')" id="ztpl-btn-confirm" class="ztpl-btn px-3 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition">1. Xác nhận đơn</button>
+              <button type="button" onclick="selectZaloTemplate('quote')" id="ztpl-btn-quote" class="ztpl-btn px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">2. Gửi báo giá</button>
+              <button type="button" onclick="selectZaloTemplate('draft')" id="ztpl-btn-draft" class="ztpl-btn px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">3. Gửi nháp & Thu tiền</button>
+              <button type="button" onclick="selectZaloTemplate('handover')" id="ztpl-btn-handover" class="ztpl-btn px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">4. Bàn giao file gốc</button>
+            </div>
+
+            <textarea id="zalo-template-textarea" rows="7" class="w-full p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <span class="text-[11px] text-slate-400">Có thể chỉnh sửa trực tiếp trước khi bấm copy</span>
+              <button type="button" onclick="copyZaloTemplateText()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm shadow-blue-200 transition">
+                <i class="fa-regular fa-copy"></i>
+                <span>Copy tin nhắn gửi Zalo</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: VISUAL QUOTE CARD & SCREENSHOT MODE (5 cols) -->
+        <div id="quote-preview-column" class="lg:col-span-5 space-y-3 lg:sticky lg:top-4">
+          <!-- Top Bar for Screenshot Mode -->
+          <div class="flex items-center justify-between bg-white px-4 py-3 rounded-2xl border border-slate-200/80 shadow-sm">
+            <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-eye text-indigo-600"></i> Thẻ Báo Giá Khách Hàng
+            </span>
+            <button type="button" id="btn-toggle-screenshot" onclick="toggleScreenshotMode()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-bold transition">
+              <i class="fa-solid fa-camera"></i>
+              <span id="lbl-screenshot-mode">Chế độ chụp ảnh gửi khách</span>
+            </button>
+          </div>
+
+          <!-- THE CUSTOMER QUOTE CARD -->
+          <div id="customer-quote-card" class="bg-white rounded-3xl overflow-hidden border border-slate-200 screenshot-frame transition-all">
+            <!-- Card Gradient Header -->
+            <div class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-700 p-5 sm:p-6 text-white">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center font-extrabold text-sm">SF</div>
+                  <div>
+                    <h3 class="font-extrabold text-base tracking-tight">SlideFlow Studio</h3>
+                    <p class="text-[11px] text-indigo-100">Thiết kế Slide Chuyên Nghiệp & Đúng Hạn</p>
+                  </div>
+                </div>
+                <span id="card-order-code" class="px-3 py-1 rounded-full bg-white/20 text-xs font-extrabold tracking-wide">#SF-101</span>
+              </div>
+
+              <div class="mt-4 pt-4 border-t border-white/15 flex items-end justify-between gap-2">
+                <div>
+                  <p class="text-[11px] uppercase tracking-wider text-indigo-200 font-semibold">Báo giá dành cho khách hàng</p>
+                  <h4 id="card-customer-name" class="text-lg sm:text-xl font-extrabold mt-0.5">Minh Anh</h4>
+                  <p id="card-topic" class="text-xs text-indigo-100 mt-0.5 line-clamp-2">Thuyết trình Marketing Chiến lược số</p>
+                </div>
+                <div class="text-right shrink-0">
+                  <span class="inline-block px-2.5 py-1 rounded-xl bg-amber-400/20 border border-amber-300/30 text-amber-200 text-[11px] font-bold">
+                    <i class="fa-regular fa-clock mr-1"></i><span id="card-deadline">20:00 Hôm nay</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Itemized Breakdown -->
+            <div class="p-5 sm:p-6 space-y-4">
+              <div id="card-items-list" class="space-y-2.5 text-xs sm:text-sm">
+                <!-- Populated dynamically -->
+              </div>
+
+              <!-- Totals Box -->
+              <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/70 space-y-2">
+                <div class="flex justify-between text-xs text-slate-600">
+                  <span>Tổng giá trị đơn hàng:</span>
+                  <span id="card-subtotal" class="font-bold text-slate-800">75.000đ</span>
+                </div>
+                <div id="card-discount-row" class="hidden flex justify-between text-xs text-rose-600">
+                  <span>Ưu đãi / Giảm giá:</span>
+                  <span id="card-discount" class="font-bold">-0đ</span>
+                </div>
+                <div id="card-deposit-row" class="hidden flex justify-between text-xs text-emerald-600">
+                  <span>Đã đặt cọc:</span>
+                  <span id="card-deposit" class="font-bold">-0đ</span>
+                </div>
+                <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                  <span class="text-xs sm:text-sm font-extrabold text-slate-900">CẦN THANH TOÁN:</span>
+                  <span id="card-final-amount" class="text-xl sm:text-2xl font-extrabold text-indigo-600">75.000đ</span>
+                </div>
+              </div>
+
+              <!-- QR CODE & PAYMENT SECTION -->
+              <div class="bg-gradient-to-b from-sky-50/90 to-blue-50/70 rounded-2xl p-4 border border-sky-200/80 text-center">
+                <!-- QR Mode Switcher Pills -->
+                <div id="qr-mode-switcher" class="inline-flex p-1 rounded-xl bg-white border border-sky-200 shadow-xs mb-3">
+                  <button type="button" id="btn-qr-vietqr" onclick="setQrDisplayMode('vietqr')" class="px-3 py-1 rounded-lg text-[11px] font-bold bg-sky-600 text-white transition">
+                    VietQR Tự điền tiền
+                  </button>
+                  <button type="button" id="btn-qr-custom" onclick="setQrDisplayMode('custom')" class="px-3 py-1 rounded-lg text-[11px] font-bold text-slate-600 hover:text-sky-700 transition">
+                    Ảnh QR cá nhân
+                  </button>
+                </div>
+
+                <!-- QR Image Container -->
+                <div class="bg-white p-2.5 rounded-2xl shadow-sm border border-sky-100 inline-block mx-auto max-w-[215px]">
+                  <img id="quote-qr-image" src="" alt="Mã QR Thanh Toán ZaloPay" class="w-44 h-44 sm:w-48 sm:h-48 object-contain mx-auto rounded-xl" />
+                </div>
+
+                <!-- Bank & Account Info -->
+                <div class="mt-3 space-y-1">
+                  <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-sky-600 text-white text-[11px] font-bold">
+                    <span id="card-bank-label">Ví ZaloPay</span>
+                  </div>
+                  <p id="card-account-name" class="text-sm font-extrabold text-slate-900 tracking-wide">NGUYEN VAN BAC</p>
+                  <div class="flex items-center justify-center gap-2 pt-0.5">
+                    <span id="card-account-no" class="text-base font-extrabold text-sky-700 tracking-wider">0348107225</span>
+                    <button type="button" id="btn-copy-stk" onclick="copyAccountNumber()" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-[11px] font-bold shadow-xs transition">
+                      <i class="fa-regular fa-copy"></i>
+                      <span>Copy STK (0348107225)</span>
+                    </button>
+                  </div>
+                  <p id="card-transfer-note" class="text-[11px] text-slate-500 pt-1">Nội dung CK: <strong class="text-slate-700">SF101 Minh Anh</strong></p>
+                </div>
+              </div>
+
+              <!-- Footer Note -->
+              <p id="card-footer-note" class="text-[11px] text-center text-slate-500 italic">
+                Hỗ trợ chỉnh sửa miễn phí 2 lần sau khi gửi nháp.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: BẢNG GIÁ & KẾT NỐI FORM ==================== -->
+    <section id="tab-settings" class="hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Left Column: Pricing, Default ZaloPay & Security (5 cols) -->
+        <div class="lg:col-span-5 space-y-5">
+          <!-- Default Pricing Config -->
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/70 shadow-sm">
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <div>
+                <h2 class="text-base sm:text-lg font-extrabold text-slate-900">Cấu hình Bảng Giá Mặc Định</h2>
+                <p class="text-xs text-slate-500">Áp dụng tự động khi tạo đơn mới hoặc nhận đơn từ Form</p>
+              </div>
+              <button type="button" onclick="savePricingConfig()" class="px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition">
+                Lưu bảng giá
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Đơn giá Học sinh (đ/slide)</label>
+                <input id="cfg-price-student" type="number" step="500" value="2000" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Đơn giá SV / Giáo viên (đ/slide)</label>
+                <input id="cfg-price-uni" type="number" step="500" value="5000" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Phí Siêu tốc (đ)</label>
+                <input id="cfg-fee-express" type="number" step="1000" value="15000" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Phí Gấp (đ)</label>
+                <input id="cfg-fee-urgent" type="number" step="1000" value="10000" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Phí biên tập nội dung (đ)</label>
+                <input id="cfg-fee-content" type="number" step="1000" value="10000" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Phí hiệu ứng nâng cao (đ)</label>
+                <input id="cfg-fee-animation" type="number" step="1000" value="10000" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Default Payment Receiver Summary in Settings -->
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-sky-200/80 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-base font-extrabold text-slate-900">Thông tin Nhận tiền Mặc định</h3>
+              <span class="px-2.5 py-1 rounded-full bg-sky-100 text-sky-700 text-[11px] font-bold">Đã kích hoạt</span>
+            </div>
+            <div class="bg-sky-50/70 rounded-2xl p-3.5 border border-sky-200/70 text-xs space-y-1.5">
+              <p><span class="text-slate-500">Ngân hàng / Ví:</span> <strong id="settings-pay-bank" class="text-slate-900">Ví ZaloPay (970454)</strong></p>
+              <p><span class="text-slate-500">Số tài khoản / SĐT:</span> <strong id="settings-pay-stk" class="text-sky-700 text-sm">0348107225</strong></p>
+              <p><span class="text-slate-500">Chủ tài khoản:</span> <strong id="settings-pay-name" class="text-slate-900">NGUYEN VAN BAC</strong></p>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button type="button" onclick="switchTab('quote')" class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition">
+                Mở Thẻ Báo Giá & QR
+              </button>
+              <button type="button" onclick="resetDefaultZaloPay()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                Đặt lại mặc định ZaloPay
+              </button>
+            </div>
+          </div>
+
+          <!-- PIN Security & Backup -->
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/70 shadow-sm space-y-4">
+            <h3 class="text-base font-extrabold text-slate-900">Bảo mật PIN & Sao lưu dữ liệu</h3>
+            <div class="flex gap-2">
+              <input id="new-pin-input" type="password" maxlength="4" inputmode="numeric" placeholder="Nhập PIN mới (4 số)" class="flex-1 px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <button type="button" onclick="changeAppPin()" class="px-4 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+                Đổi mã PIN
+              </button>
+            </div>
+
+            <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+              <button type="button" onclick="exportOrdersCSV()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition">
+                <i class="fa-solid fa-file-csv"></i> Xuất file Excel / CSV
+              </button>
+              <button type="button" onclick="restoreSampleOrders()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition">
+                <i class="fa-solid fa-rotate-left"></i> Khôi phục dữ liệu mẫu
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Google Sheets + Apps Script v3 Integration (7 cols) -->
+        <div class="lg:col-span-7 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/70 shadow-sm space-y-5">
+          <div>
+            <span class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold tracking-wide uppercase mb-2">
+              AUTOMATION GOOGLE SHEETS + FORM
+            </span>
+            <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Kết nối đồng bộ 2 chiều & Email nhắc hạn</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+              Dán URL Web App từ Google Apps Script để web tự kéo đơn mới từ Google Form và đẩy trạng thái Hoàn thành về Sheet.
+            </p>
+          </div>
+
+          <!-- Script URL Input -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Google Apps Script Web App URL</label>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input id="apps-script-url-input" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <button type="button" onclick="saveAndConnectScript()" class="px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm transition whitespace-nowrap">
+                Kết nối
+              </button>
+            </div>
+          </div>
+
+          <!-- Team Quick Share Link -->
+          <div class="bg-indigo-50/70 rounded-2xl p-4 border border-indigo-200/80 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-extrabold text-indigo-900"><i class="fa-solid fa-link mr-1"></i> Link chia sẻ nhanh cho cả Team (Tự kết nối sẵn):</span>
+              <button type="button" onclick="copyTeamShareLink()" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">
+                Copy Link Team
+              </button>
+            </div>
+            <input id="team-share-link-input" type="text" readonly class="w-full px-3 py-2 rounded-xl bg-white border border-indigo-200 text-[11px] text-slate-600 font-mono" />
+          </div>
+
+          <!-- Google Apps Script v3 Code Box -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="text-xs sm:text-sm font-extrabold text-slate-800">Mã Google Apps Script v3 (Chống lỗi CORS + JSONP + Báo Form tức thì)</h3>
+              <button type="button" onclick="copyAppsScriptCode()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+                <i class="fa-regular fa-copy"></i> Copy Code v3
+              </button>
+            </div>
+            <pre id="apps-script-v3-code" class="bg-slate-900 text-emerald-300 p-4 rounded-2xl text-[11px] leading-relaxed overflow-x-auto max-h-72 font-mono select-all">// ====================================================================
+// SLIDEFLOW STUDIO v3 — GOOGLE APPS SCRIPT REAL-TIME (CHỐNG LỖI CORS + JSONP)
+// ====================================================================
+const SHEET_NAME = "Câu trả lời biểu mẫu 1";
+// (Tùy chọn) Dán Bot Token & Chat ID Telegram nếu muốn nhận tin nhắn ngay khi khách gửi Form
+const TELEGRAM_BOT_TOKEN = "";
+const TELEGRAM_CHAT_ID = "";
+
+function doGet(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];
+  const params = (e && e.parameter) ? e.parameter : {};
+  const action = params.action || "getOrders";
+  const callback = params.callback;
+
+  let result = { status: "ok", version: "v3", orders: [] };
+
+  try {
+    if (action === "updateStatus" && params.rowIndex && params.newStatus) {
+      const row = parseInt(params.rowIndex, 10);
+      const lastCol = Math.max(sheet.getLastColumn(), 10);
+      const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      let statusCol = headers.findIndex(h => String(h).toLowerCase().includes("trạng thái")) + 1;
+      if (statusCol <= 0) {
+        statusCol = lastCol + 1;
+        sheet.getRange(1, statusCol).setValue("Trạng thái");
+      }
+      sheet.getRange(row, statusCol).setValue(params.newStatus);
+      result.message = "Đã cập nhật trạng thái dòng " + row;
+    }
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length > 1) {
+      const headers = data[0].map(h => String(h).trim().toLowerCase());
+      for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row.join("").trim()) continue;
+        result.orders.push({
+          rowIndex: i + 1,
+          timestamp: row[0] ? new Date(row[0]).toISOString() : "",
+          customerName: String(row[1] || "Khách Form #" + i),
+          contact: String(row[2] || ""),
+          topic: String(row[3] || "Thiết kế Slide theo yêu cầu"),
+          tier: String(row[4] || "").toLowerCase().includes("học sinh") ? "student" : "uni",
+          slideCount: parseInt(row[5], 10) || 10,
+          deadline: row[6] ? new Date(row[6]).toISOString() : "",
+          urgency: String(row[7] || ""),
+          note: String(row[8] || ""),
+          status: String(row[9] || "Mới tiếp nhận")
+        });
+      }
+    }
+  } catch (err) {
+    result = { status: "error", message: err.toString() };
+  }
+
+  const output = JSON.stringify(result);
+  if (callback) {
+    return ContentService.createTextOutput(callback + "(" + output + ")")
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(output)
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function onFormSubmitTrigger(e) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+  const values = e && e.values ? e.values : [];
+  const msg = "📥 ĐƠN SLIDE MỚI TỪ FORM!\n" +
+    "👤 Khách: " + (values[1] || "N/A") + "\n" +
+    "📞 Liên hệ: " + (values[2] || "N/A") + "\n" +
+    "📌 Chủ đề: " + (values[3] || "N/A") + "\n" +
+    "📊 Số slide: " + (values[5] || "N/A");
+  UrlFetchApp.fetch("https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage", {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg })
+  });
+}</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ==================== ADD / EDIT ORDER MODAL ==================== -->
+  <div id="order-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 my-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 id="modal-order-title" class="text-lg font-extrabold text-slate-900">Thêm Đơn Hàng Mới</h3>
+        <button type="button" onclick="closeOrderModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="order-form" onsubmit="saveOrderFromModal(event)" class="space-y-3.5 mt-4">
+        <input type="hidden" id="m-order-id" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Tên khách hàng *</label>
+            <input id="m-customer-name" type="text" required placeholder="VD: Lan Anh" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">SĐT / Zalo khách</label>
+            <input id="m-contact" type="text" placeholder="VD: 0901234567" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Chủ đề / Yêu cầu Slide *</label>
+          <input id="m-topic" type="text" required placeholder="VD: Báo cáo thực tập Quản trị kinh doanh" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Đối tượng</label>
+            <select id="m-tier" onchange="recalcModalTotal()" class="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold">
+              <option value="student">Học sinh</option>
+              <option value="uni" selected>SV / Giáo viên</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Số Slide</label>
+            <input id="m-slide-count" type="number" min="1" value="12" oninput="recalcModalTotal()" class="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Gói tốc độ</label>
+            <select id="m-urgency" onchange="recalcModalTotal()" class="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold">
+              <option value="normal">Tiêu chuẩn (+0đ)</option>
+              <option value="urgent">Gấp (+10k)</option>
+              <option value="express">Siêu tốc (+15k)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Hạn chót (Deadline) *</label>
+            <input id="m-deadline" type="datetime-local" required class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Trạng thái</label>
+            <select id="m-status" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold">
+              <option value="Mới tiếp nhận">🆕 Mới tiếp nhận</option>
+              <option value="Đang làm">🎨 Đang làm</option>
+              <option value="Gửi nháp">👀 Gửi nháp</option>
+              <option value="Chờ thanh toán">💳 Chờ thanh toán</option>
+              <option value="Hoàn thành">✅ Hoàn thành</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Tổng tiền (VNĐ)</label>
+            <input id="m-total-amount" type="number" step="1000" value="60000" class="w-full px-3.5 py-2.5 rounded-2xl bg-indigo-50/60 border border-indigo-200 text-sm font-extrabold text-indigo-700" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Đã thanh toán / Cọc (VNĐ)</label>
+            <input id="m-paid-amount" type="number" step="1000" value="0" class="w-full px-3.5 py-2.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 text-sm font-bold text-emerald-700" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Ghi chú đơn hàng</label>
+          <textarea id="m-note" rows="2" placeholder="Yêu cầu tông màu, font chữ, link tài liệu..." class="w-full px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeOrderModal()" class="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold">Hủy</button>
+          <button type="submit" class="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm">Lưu đơn hàng</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT APPLICATION LOGIC ==================== -->
+  <script>
+    // =========================================================================
+    // 1. DEFAULT CONSTANTS & STORAGE KEYS
+    // =========================================================================
+    const STORAGE_KEYS = {
+      PIN: "sf_v3_pin",
+      UNLOCKED: "sf_v3_unlocked",
+      ORDERS: "sf_v3_orders",
+      PRICING: "sf_v3_pricing",
+      PAYMENT: "sf_v3_payment",
+      CUSTOM_QR: "sf_v3_custom_qr_img",
+      QR_MODE: "sf_v3_qr_display_mode",
+      SCRIPT_URL: "sf_v3_apps_script_url"
+    };
+
+    // Pre-configured Shop Payment Receiver (ZaloPay - 0348107225 - NGUYEN VAN BAC)
+    const DEFAULT_PAYMENT_INFO = {
+      bankCode: "zalopay",
+      bankLabel: "Ví ZaloPay",
+      accountNo: "0348107225",
+      accountName: "NGUYEN VAN BAC"
+    };
+
+    const BANK_LABELS = {
+      zalopay: "Ví ZaloPay",
+      MB: "MB Bank (Quân Đội)",
+      VCB: "Vietcombank",
+      TCB: "Techcombank",
+      BIDV: "BIDV",
+      ACB: "ACB",
+      VPB: "VPBank",
+      TPB: "TPBank"
+    };
+
+    const DEFAULT_PRICING = {
+      student: 2000,
+      uni: 5000,
+      express: 15000,
+      urgent: 10000,
+      content: 10000,
+      animation: 10000
+    };
+
+    // State Variables
+    let currentPinBuffer = "";
+    let orders = [];
+    let pricingConfig = { ...DEFAULT_PRICING };
+    let paymentInfo = { ...DEFAULT_PAYMENT_INFO };
+    let customQrDataUrl = "";
+    let qrDisplayMode = "vietqr"; // 'vietqr' or 'custom'
+    let activeZaloTemplateKey = "confirm";
+    let isScreenshotMode = false;
+    let countdownInterval = null;
+    let autoSyncInterval = null;
+
+    // =========================================================================
+    // 2. INITIALIZATION ON WINDOW LOAD
+    // =========================================================================
+    window.addEventListener("DOMContentLoaded", () => {
+      try {
+        loadSavedState();
+        updateHeaderDate();
+        checkUrlApiAutoConnect();
+        initPinSystem();
+        renderPricingInputs();
+        renderPaymentInputs();
+        renderOrders();
+        populateQuoteOrderDropdown();
+        updateQuotePreview();
+        startRealtimeTimers();
+      } catch (err) {
+        console.error("Lỗi khởi tạo SlideFlow Studio:", err);
+      }
+    });
+
+    function loadSavedState() {
+      // Pricing
+      const savedPricing = localStorage.getItem(STORAGE_KEYS.PRICING);
+      if (savedPricing) {
+        pricingConfig = { ...DEFAULT_PRICING, ...JSON.parse(savedPricing) };
+      }
+
+      // Payment info (defaults strictly to ZaloPay 0348107225 NGUYEN VAN BAC)
+      const savedPayment = localStorage.getItem(STORAGE_KEYS.PAYMENT);
+      if (savedPayment) {
+        paymentInfo = { ...DEFAULT_PAYMENT_INFO, ...JSON.parse(savedPayment) };
+      } else {
+        paymentInfo = { ...DEFAULT_PAYMENT_INFO };
+        localStorage.setItem(STORAGE_KEYS.PAYMENT, JSON.stringify(paymentInfo));
+      }
+
+      // Custom uploaded QR image
+      customQrDataUrl = localStorage.getItem(STORAGE_KEYS.CUSTOM_QR) || "";
+      qrDisplayMode = localStorage.getItem(STORAGE_KEYS.QR_MODE) || "vietqr";
+      if (qrDisplayMode === "custom" && !customQrDataUrl) {
+        qrDisplayMode = "vietqr";
+      }
+
+      // Orders
+      const savedOrders = localStorage.getItem(STORAGE_KEYS.ORDERS);
+      if (savedOrders) {
+        orders = JSON.parse(savedOrders);
+      } else {
+        orders = getDefaultSampleOrders();
+        saveOrdersToStorage();
+      }
+
+      // Script URL
+      const savedScriptUrl = localStorage.getItem(STORAGE_KEYS.SCRIPT_URL) || "";
+      document.getElementById("apps-script-url-input").value = savedScriptUrl;
+      updateTeamShareLinkField();
+    }
+
+    function getDefaultSampleOrders() {
+      const now = Date.now();
+      return [
+        {
+          id: "SF-101",
+          customerName: "Minh Anh",
+          contact: "0912345678",
+          topic: "Thuyết trình Marketing Chiến lược số",
+          tier: "uni",
+          slideCount: 15,
+          urgency: "urgent",
+          deadline: new Date(now + 4.5 * 3600 * 1000).toISOString(),
+          totalAmount: 85000,
+          paidAmount: 0,
+          status: "Đang làm",
+          note: "Tông xanh navy hiện đại, có biểu đồ số liệu.",
+          rowIndex: null
+        },
+        {
+          id: "SF-102",
+          customerName: "Hoàng Nam",
+          contact: "0987654321",
+          topic: "Lịch sử Việt Nam giai đoạn 1945 - 1954",
+          tier: "student",
+          slideCount: 20,
+          urgency: "normal",
+          deadline: new Date(now + 26 * 3600 * 1000).toISOString(),
+          totalAmount: 40000,
+          paidAmount: 20000,
+          status: "Mới tiếp nhận",
+          note: "Chèn nhiều hình ảnh tư liệu lịch sử rõ nét.",
+          rowIndex: null
+        },
+        {
+          id: "SF-103",
+          customerName: "Cô Thu Hà",
+          contact: "0909888777",
+          topic: "Bài giảng Ngữ Văn 11 — Sóng (Xuân Quỳnh)",
+          tier: "uni",
+          slideCount: 18,
+          urgency: "normal",
+          deadline: new Date(now + 52 * 3600 * 1000).toISOString(),
+          totalAmount: 90000,
+          paidAmount: 90000,
+          status: "Hoàn thành",
+          note: "Hiệu ứng chuyển cảnh nhẹ nhàng, dễ dạy trên lớp.",
+          rowIndex: null
+        }
+      ];
+    }
+
+    function saveOrdersToStorage() {
+      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+    }
+
+    function updateHeaderDate() {
+      const days = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+      const now = new Date();
+      const dayName = days[now.getDay()];
+      const dd = String(now.getDate()).padStart(2, "0");
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const yyyy = now.getFullYear();
+      document.getElementById("current-date-display").textContent = `${dayName}, ${dd}/${mm}/${yyyy} • Hệ thống điều phối & báo giá`;
+    }
+
+    // =========================================================================
+    // 3. PIN SECURITY SYSTEM (DEFAULT: 2011)
+    // =========================================================================
+    function initPinSystem() {
+      const isUnlocked = sessionStorage.getItem(STORAGE_KEYS.UNLOCKED) === "true";
+      if (isUnlocked) {
+        unlockAppUI();
+      } else {
+        document.getElementById("pin-lock-screen").classList.remove("hidden");
+        document.getElementById("main-app").classList.add("hidden");
+      }
+
+      // Keyboard support for PIN
+      document.addEventListener("keydown", (e) => {
+        const lockScreen = document.getElementById("pin-lock-screen");
+        if (lockScreen.classList.contains("hidden")) return;
+        if (e.key >= "0" && e.key <= "9") {
+          enterPinDigit(e.key);
+        } else if (e.key === "Backspace") {
+          backspacePin();
+        } else if (e.key === "Escape") {
+          clearPinInput();
+        }
+      });
+    }
+
+    function enterPinDigit(digit) {
+      if (currentPinBuffer.length >= 4) return;
+      currentPinBuffer += digit;
+      updatePinDots();
+
+      if (currentPinBuffer.length === 4) {
+        const savedPin = localStorage.getItem(STORAGE_KEYS.PIN) || "2011";
+        if (currentPinBuffer === savedPin) {
+          sessionStorage.setItem(STORAGE_KEYS.UNLOCKED, "true");
+          document.getElementById("pin-error-msg").textContent = "";
+          unlockAppUI();
+          showToast("Mở khóa thành công! Chào mừng quay lại SlideFlow Studio.", "success");
+        } else {
+          document.getElementById("pin-error-msg").textContent = "Mã PIN chưa đúng (Mặc định: 2011)";
+          setTimeout(() => {
+            currentPinBuffer = "";
+            updatePinDots();
+          }, 450);
+        }
+      }
+    }
+
+    function backspacePin() {
+      currentPinBuffer = currentPinBuffer.slice(0, -1);
+      updatePinDots();
+    }
+
+    function clearPinInput() {
+      currentPinBuffer = "";
+      document.getElementById("pin-error-msg").textContent = "";
+      updatePinDots();
+    }
+
+    function updatePinDots() {
+      const dots = document.querySelectorAll("#pin-dots span");
+      dots.forEach((dot, idx) => {
+        if (idx < currentPinBuffer.length) {
+          dot.classList.remove("border-slate-300");
+          dot.classList.add("bg-indigo-600", "border-indigo-600", "scale-110");
+        } else {
+          dot.classList.add("border-slate-300");
+          dot.classList.remove("bg-indigo-600", "border-indigo-600", "scale-110");
+        }
+      });
+    }
+
+    function unlockAppUI() {
+      document.getElementById("pin-lock-screen").classList.add("hidden");
+      document.getElementById("main-app").classList.remove("hidden");
+    }
+
+    function lockApp() {
+      sessionStorage.removeItem(STORAGE_KEYS.UNLOCKED);
+      currentPinBuffer = "";
+      updatePinDots();
+      document.getElementById("pin-lock-screen").classList.remove("hidden");
+      document.getElementById("main-app").classList.add("hidden");
+    }
+
+    function changeAppPin() {
+      const newPin = document.getElementById("new-pin-input").value.trim();
+      if (!/^\d{4}$/.test(newPin)) {
+        showToast("Mã PIN mới phải gồm đúng 4 chữ số!", "error");
+        return;
+      }
+      localStorage.setItem(STORAGE_KEYS.PIN, newPin);
+      document.getElementById("new-pin-input").value = "";
+      showToast(`Đã đổi mã PIN thành công sang: ${newPin}`, "success");
+    }
+
+    // =========================================================================
+    // 4. NAVIGATION TABS
+    // =========================================================================
+    function switchTab(tabName) {
+      const tabs = ["orders", "quote", "settings"];
+      tabs.forEach((t) => {
+        const section = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tabName) {
+          section.classList.remove("hidden");
+          btn.classList.remove("bg-white", "text-slate-600", "hover:bg-slate-100", "border", "border-slate-200/80");
+          btn.classList.add("bg-indigo-600", "text-white", "shadow-md", "shadow-indigo-200");
+        } else {
+          section.classList.add("hidden");
+          btn.classList.add("bg-white", "text-slate-600", "hover:bg-slate-100", "border", "border-slate-200/80");
+          btn.classList.remove("bg-indigo-600", "text-white", "shadow-md", "shadow-indigo-200");
+        }
+      });
+
+      if (tabName === "quote") {
+        populateQuoteOrderDropdown();
+        updateQuotePreview();
+      }
+    }
+
+    // =========================================================================
+    // 5. ORDER DISPATCH & DEADLINE RADAR
+    // =========================================================================
+    function renderOrders() {
+      const container = document.getElementById("orders-list-container");
+      const searchVal = (document.getElementById("order-search-input").value || "").toLowerCase().trim();
+      const statusFilter = document.getElementById("order-status-filter").value;
+      const sortMode = document.getElementById("order-sort-select").value;
+
+      let filtered = orders.filter((o) => {
+        const matchSearch =
+          !searchVal ||
+          o.customerName.toLowerCase().includes(searchVal) ||
+          o.id.toLowerCase().includes(searchVal) ||
+          o.topic.toLowerCase().includes(searchVal) ||
+          (o.contact && o.contact.toLowerCase().includes(searchVal));
+
+        if (!matchSearch) return false;
+
+        if (statusFilter === "ALL") return true;
+        if (statusFilter === "URGENT") {
+          const hrsLeft = (new Date(o.deadline).getTime() - Date.now()) / 3600000;
+          return o.status !== "Hoàn thành" && hrsLeft <= 12;
+        }
+        return o.status === statusFilter;
+      });
+
+      filtered.sort((a, b) => {
+        if (sortMode === "DEADLINE_ASC") {
+          if (a.status === "Hoàn thành" && b.status !== "Hoàn thành") return 1;
+          if (a.status !== "Hoàn thành" && b.status === "Hoàn thành") return -1;
+          return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+        }
+        if (sortMode === "AMOUNT_DESC") {
+          return (b.totalAmount || 0) - (a.totalAmount || 0);
+        }
+        return b.id.localeCompare(a.id);
+      });
+
+      updateKpisAndRadar();
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-white rounded-3xl p-10 text-center border border-slate-200/70">
+            <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-xl">
+              <i class="fa-regular fa-folder-open"></i>
+            </div>
+            <h3 class="font-bold text-slate-800">Không tìm thấy đơn hàng nào</h3>
+            <p class="text-xs text-slate-500 mt-1">Thử thay đổi bộ lọc hoặc bấm nút "Thêm đơn" ở góc trên bên phải.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map((order) => {
+        const remain = Math.max(0, (order.totalAmount || 0) - (order.paidAmount || 0));
+        const deadlineInfo = getDeadlineCountdownInfo(order.deadline, order.status);
+        const statusBadge = getStatusBadgeHtml(order.status);
+
+        return `
+          <article class="bg-white rounded-3xl p-5 border ${deadlineInfo.cardBorder} shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-lg">${escapeHtml(order.id)}</span>
+                    ${statusBadge}
+                  </div>
+                  <h3 class="text-base font-extrabold text-slate-900 mt-2">${escapeHtml(order.customerName)}</h3>
+                  ${order.contact ? `<p class="text-xs text-slate-500"><i class="fa-solid fa-phone text-[10px] mr-1"></i>${escapeHtml(order.contact)}</p>` : ""}
+                </div>
+                <div class="text-right">
+                  <span class="inline-block px-2.5 py-1 rounded-xl text-[11px] font-extrabold ${deadlineInfo.badgeClass}" data-deadline="${order.deadline}" data-status="${order.status}">
+                    ${deadlineInfo.text}
+                  </span>
+                </div>
+              </div>
+
+              <p class="text-xs sm:text-sm font-medium text-slate-700 mt-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                ${escapeHtml(order.topic)}
+              </p>
+
+              <div class="flex items-center flex-wrap gap-2 mt-3 text-[11px] font-semibold text-slate-600">
+                <span class="px-2.5 py-1 rounded-lg bg-slate-100"><i class="fa-solid fa-file-powerpoint text-orange-500 mr-1"></i>${order.slideCount} slides</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-100">${order.tier === "student" ? "Học sinh" : "SV / Giáo viên"}</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-100"><i class="fa-regular fa-calendar mr-1"></i>${formatShortDateTime(order.deadline)}</span>
+              </div>
+
+              ${order.note ? `<p class="text-[11px] text-slate-500 mt-2.5 italic line-clamp-2"><i class="fa-regular fa-note-sticky mr-1"></i>${escapeHtml(order.note)}</p>` : ""}
+            </div>
+
+            <div class="mt-4 pt-3.5 border-t border-slate-100">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <span class="text-[11px] text-slate-400 block">Tổng đơn / Còn lại</span>
+                  <span class="text-sm font-extrabold text-slate-900">${formatVND(order.totalAmount)}</span>
+                  ${remain > 0
+                    ? `<span class="text-xs font-bold text-rose-600 ml-1">(Còn ${formatVND(remain)})</span>`
+                    : `<span class="text-[11px] font-bold text-emerald-600 ml-1">✓ Đã đủ</span>`}
+                </div>
+
+                <!-- Quick Status Selector -->
+                <select onchange="quickUpdateOrderStatus('${order.id}', this.value)" class="px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="Mới tiếp nhận" ${order.status === "Mới tiếp nhận" ? "selected" : ""}>Mới tiếp nhận</option>
+                  <option value="Đang làm" ${order.status === "Đang làm" ? "selected" : ""}>Đang làm</option>
+                  <option value="Gửi nháp" ${order.status === "Gửi nháp" ? "selected" : ""}>Gửi nháp</option>
+                  <option value="Chờ thanh toán" ${order.status === "Chờ thanh toán" ? "selected" : ""}>Chờ thanh toán</option>
+                  <option value="Hoàn thành" ${order.status === "Hoàn thành" ? "selected" : ""}>Hoàn thành</option>
+                </select>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="sendOrderToQuote('${order.id}')" class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition">
+                  <i class="fa-solid fa-qrcode"></i> Báo giá & QR
+                </button>
+                <button type="button" onclick="openOrderModal('${order.id}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition" title="Chỉnh sửa">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button type="button" onclick="deleteOrder('${order.id}')" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition" title="Xóa đơn">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function getDeadlineCountdownInfo(deadlineIso, status) {
+      if (status === "Hoàn thành") {
+        return {
+          text: "Đã bàn giao",
+          badgeClass: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+          cardBorder: "border-slate-200/70"
+        };
+      }
+      const diffMs = new Date(deadlineIso).getTime() - Date.now();
+      if (isNaN(diffMs)) {
+        return {
+          text: "Chưa rõ hạn",
+          badgeClass: "bg-slate-100 text-slate-600",
+          cardBorder: "border-slate-200/70"
+        };
+      }
+      if (diffMs <= 0) {
+        const overdueHrs = Math.abs(Math.floor(diffMs / 3600000));
+        return {
+          text: `Quá hạn ${overdueHrs}h`,
+          badgeClass: "bg-rose-600 text-white animate-soft-pulse",
+          cardBorder: "border-rose-300"
+        };
+      }
+      const totalMins = Math.floor(diffMs / 60000);
+      const hrs = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
+      if (hrs < 12) {
+        return {
+          text: `Còn ${hrs}h ${mins}p`,
+          badgeClass: "bg-amber-100 text-amber-800 border border-amber-300",
+          cardBorder: "border-amber-300"
+        };
+      }
+      const days = Math.floor(hrs / 24);
+      const remHrs = hrs % 24;
+      return {
+        text: days > 0 ? `Còn ${days}d ${remHrs}h` : `Còn ${hrs}h`,
+        badgeClass: "bg-sky-50 text-sky-700 border border-sky-200",
+        cardBorder: "border-slate-200/70"
+      };
+    }
+
+    function getStatusBadgeHtml(status) {
+      const map = {
+        "Mới tiếp nhận": "bg-sky-100 text-sky-800",
+        "Đang làm": "bg-amber-100 text-amber-800",
+        "Gửi nháp": "bg-purple-100 text-purple-800",
+        "Chờ thanh toán": "bg-rose-100 text-rose-800",
+        "Hoàn thành": "bg-emerald-100 text-emerald-800"
+      };
+      const cls = map[status] || "bg-slate-100 text-slate-700";
+      return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cls}">${escapeHtml(status)}</span>`;
+    }
+
+    function updateKpisAndRadar() {
+      let activeCount = 0;
+      let urgentCount = 0;
+      let unpaidSum = 0;
+      let totalRev = 0;
+
+      orders.forEach((o) => {
+        totalRev += Number(o.totalAmount) || 0;
+        const remain = Math.max(0, (Number(o.totalAmount) || 0) - (Number(o.paidAmount) || 0));
+        unpaidSum += remain;
+
+        if (o.status !== "Hoàn thành") {
+          activeCount++;
+          const hrsLeft = (new Date(o.deadline).getTime() - Date.now()) / 3600000;
+          if (!isNaN(hrsLeft) && hrsLeft <= 12) {
+            urgentCount++;
+          }
+        }
+      });
+
+      document.getElementById("kpi-active-orders").textContent = activeCount;
+      document.getElementById("kpi-urgent-orders").textContent = urgentCount;
+      document.getElementById("kpi-unpaid-amount").textContent = formatVND(unpaidSum);
+      document.getElementById("kpi-total-revenue").textContent = formatVND(totalRev);
+      document.getElementById("radar-badge-count").textContent = urgentCount;
+
+      const banner = document.getElementById("radar-banner");
+      if (urgentCount > 0) {
+        banner.classList.remove("hidden");
+        document.getElementById("radar-banner-text").textContent = `Hiện có ${urgentCount} đơn hàng sắp tới hạn (<12h) hoặc đã quá hạn cần xử lý ngay!`;
+      } else {
+        banner.classList.add("hidden");
+      }
+    }
+
+    function filterOrdersByUrgent() {
+      switchTab("orders");
+      document.getElementById("order-status-filter").value = "URGENT";
+      renderOrders();
+    }
+
+    function toggleRadarDrawer() {
+      filterOrdersByUrgent();
+      showToast("Đã lọc danh sách các đơn sắp tới hạn (<12h).", "info");
+    }
+
+    function startRealtimeTimers() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        renderOrders();
+      }, 60000);
+    }
+
+    // =========================================================================
+    // 6. ORDER MODAL CRUD & SYNC STATUS BACK TO SHEET
+    // =========================================================================
+    function openOrderModal(orderId = null) {
+      const modal = document.getElementById("order-modal");
+      modal.classList.remove("hidden");
+
+      if (orderId) {
+        const order = orders.find((o) => o.id === orderId);
+        if (!order) return;
+        document.getElementById("modal-order-title").textContent = `Chỉnh sửa đơn ${order.id}`;
+        document.getElementById("m-order-id").value = order.id;
+        document.getElementById("m-customer-name").value = order.customerName;
+        document.getElementById("m-contact").value = order.contact || "";
+        document.getElementById("m-topic").value = order.topic;
+        document.getElementById("m-tier").value = order.tier || "uni";
+        document.getElementById("m-slide-count").value = order.slideCount || 10;
+        document.getElementById("m-urgency").value = order.urgency || "normal";
+        document.getElementById("m-deadline").value = toLocalDatetimeInputValue(order.deadline);
+        document.getElementById("m-status").value = order.status || "Mới tiếp nhận";
+        document.getElementById("m-total-amount").value = order.totalAmount || 0;
+        document.getElementById("m-paid-amount").value = order.paidAmount || 0;
+        document.getElementById("m-note").value = order.note || "";
+      } else {
+        document.getElementById("modal-order-title").textContent = "Thêm Đơn Hàng Mới";
+        document.getElementById("m-order-id").value = "";
+        document.getElementById("m-customer-name").value = "";
+        document.getElementById("m-contact").value = "";
+        document.getElementById("m-topic").value = "";
+        document.getElementById("m-tier").value = "uni";
+        document.getElementById("m-slide-count").value = 12;
+        document.getElementById("m-urgency").value = "normal";
+        const defaultDeadline = new Date(Date.now() + 24 * 3600 * 1000);
+        document.getElementById("m-deadline").value = toLocalDatetimeInputValue(defaultDeadline.toISOString());
+        document.getElementById("m-status").value = "Mới tiếp nhận";
+        document.getElementById("m-paid-amount").value = 0;
+        document.getElementById("m-note").value = "";
+        recalcModalTotal();
+      }
+    }
+
+    function closeOrderModal() {
+      document.getElementById("order-modal").classList.add("hidden");
+    }
+
+    function recalcModalTotal() {
+      const tier = document.getElementById("m-tier").value;
+      const slides = parseInt(document.getElementById("m-slide-count").value, 10) || 0;
+      const urgency = document.getElementById("m-urgency").value;
+      const unitPrice = tier === "student" ? pricingConfig.student : pricingConfig.uni;
+      let extra = 0;
+      if (urgency === "urgent") extra = pricingConfig.urgent;
+      if (urgency === "express") extra = pricingConfig.express;
+      document.getElementById("m-total-amount").value = slides * unitPrice + extra;
+    }
+
+    function saveOrderFromModal(e) {
+      e.preventDefault();
+      const existingId = document.getElementById("m-order-id").value;
+      const deadlineInput = document.getElementById("m-deadline").value;
+
+      const orderData = {
+        id: existingId || `SF-${Math.floor(100 + Math.random() * 900)}`,
+        customerName: document.getElementById("m-customer-name").value.trim(),
+        contact: document.getElementById("m-contact").value.trim(),
+        topic: document.getElementById("m-topic").value.trim(),
+        tier: document.getElementById("m-tier").value,
+        slideCount: parseInt(document.getElementById("m-slide-count").value, 10) || 1,
+        urgency: document.getElementById("m-urgency").value,
+        deadline: deadlineInput ? new Date(deadlineInput).toISOString() : new Date().toISOString(),
+        status: document.getElementById("m-status").value,
+        totalAmount: parseInt(document.getElementById("m-total-amount").value, 10) || 0,
+        paidAmount: parseInt(document.getElementById("m-paid-amount").value, 10) || 0,
+        note: document.getElementById("m-note").value.trim()
+      };
+
+      if (existingId) {
+        const idx = orders.findIndex((o) => o.id === existingId);
+        if (idx !== -1) {
+          orderData.rowIndex = orders[idx].rowIndex || null;
+          orders[idx] = orderData;
+        }
+        showToast(`Đã cập nhật đơn ${orderData.id}!`, "success");
+      } else {
+        orderData.rowIndex = null;
+        orders.unshift(orderData);
+        showToast(`Đã tạo đơn mới ${orderData.id}!`, "success");
+      }
+
+      saveOrdersToStorage();
+      renderOrders();
+      populateQuoteOrderDropdown();
+      closeOrderModal();
+    }
+
+    function quickUpdateOrderStatus(orderId, newStatus) {
+      const order = orders.find((o) => o.id === orderId);
+      if (!order) return;
+      order.status = newStatus;
+      if (newStatus === "Hoàn thành" && order.paidAmount < order.totalAmount) {
+        order.paidAmount = order.totalAmount;
+      }
+      saveOrdersToStorage();
+      renderOrders();
+      showToast(`Đơn ${order.id} → "${newStatus}"`, "success");
+
+      // Push status update back to Google Sheets if linked
+      if (order.rowIndex) {
+        pushStatusToGoogleSheet(order.rowIndex, newStatus);
+      }
+    }
+
+    function deleteOrder(orderId) {
+      orders = orders.filter((o) => o.id !== orderId);
+      saveOrdersToStorage();
+      renderOrders();
+      populateQuoteOrderDropdown();
+      showToast(`Đã xóa đơn ${orderId}.`, "info");
+    }
+
+    function sendOrderToQuote(orderId) {
+      switchTab("quote");
+      document.getElementById("quote-load-order-select").value = orderId;
+      loadOrderIntoQuote(orderId);
+      showToast(`Đã nạp đơn ${orderId} vào Trình Tạo Báo Giá & QR!`, "success");
+    }
+
+    // =========================================================================
+    // 7. QUOTE BUILDER, DYNAMIC VIETQR ZALOPAY & CUSTOM QR IMAGE
+    // =========================================================================
+    function populateQuoteOrderDropdown() {
+      const sel = document.getElementById("quote-load-order-select");
+      const currentVal = sel.value;
+      sel.innerHTML = `<option value="">-- Chọn đơn từ danh sách --</option>` +
+        orders.map((o) => `<option value="${o.id}">${o.id} — ${escapeHtml(o.customerName)} (${o.slideCount} slides)</option>`).join("");
+      if (orders.some((o) => o.id === currentVal)) {
+        sel.value = currentVal;
+      }
+    }
+
+    function loadOrderIntoQuote(orderId) {
+      if (!orderId) return;
+      const o = orders.find((item) => item.id === orderId);
+      if (!o) return;
+
+      document.getElementById("q-order-code").value = o.id;
+      document.getElementById("q-customer-name").value = o.customerName;
+      document.getElementById("q-topic").value = o.topic;
+      document.getElementById("q-tier").value = o.tier || "uni";
+      document.getElementById("q-slide-count").value = o.slideCount || 10;
+      document.getElementById("q-deadline-text").value = formatShortDateTime(o.deadline);
+      document.getElementById("q-deposit").value = o.paidAmount || 0;
+      document.getElementById("q-discount").value = 0;
+
+      document.getElementById("addon-express").checked = o.urgency === "express";
+      document.getElementById("addon-urgent").checked = o.urgency === "urgent";
+      document.getElementById("addon-content").checked = false;
+      document.getElementById("addon-animation").checked = false;
+
+      if (o.note) {
+        document.getElementById("q-note").value = o.note;
+      }
+      updateQuotePreview();
+    }
+
+    function renderPaymentInputs() {
+      document.getElementById("pay-bank-code").value = paymentInfo.bankCode || "zalopay";
+      document.getElementById("pay-account-no").value = paymentInfo.accountNo || "0348107225";
+      document.getElementById("pay-account-name").value = paymentInfo.accountName || "NGUYEN VAN BAC";
+
+      // Update settings summary card too
+      const bankTitle = BANK_LABELS[paymentInfo.bankCode] || paymentInfo.bankCode;
+      document.getElementById("settings-pay-bank").textContent = `${bankTitle} (${paymentInfo.bankCode === "zalopay" ? "970454" : paymentInfo.bankCode})`;
+      document.getElementById("settings-pay-stk").textContent = paymentInfo.accountNo;
+      document.getElementById("settings-pay-name").textContent = paymentInfo.accountName;
+
+      // Custom QR status text
+      const statusEl = document.getElementById("custom-qr-status-text");
+      const removeBtn = document.getElementById("btn-remove-custom-qr");
+      if (customQrDataUrl) {
+        statusEl.textContent = "Đã lưu ảnh QR cá nhân của shop (sẵn sàng chuyển đổi)";
+        statusEl.className = "text-emerald-600 font-bold block sm:inline sm:ml-1";
+        removeBtn.classList.remove("hidden");
+      } else {
+        statusEl.textContent = "Chưa tải ảnh riêng (đang dùng VietQR tự động)";
+        statusEl.className = "text-slate-500 block sm:inline sm:ml-1";
+        removeBtn.classList.add("hidden");
+      }
+    }
+
+    function handlePaymentInfoChange() {
+      const bankCode = document.getElementById("pay-bank-code").value;
+      const accountNo = document.getElementById("pay-account-no").value.trim();
+      const accountName = document.getElementById("pay-account-name").value.trim().toUpperCase();
+
+      paymentInfo = {
+        bankCode,
+        bankLabel: BANK_LABELS[bankCode] || bankCode,
+        accountNo: accountNo || "0348107225",
+        accountName: accountName || "NGUYEN VAN BAC"
+      };
+      localStorage.setItem(STORAGE_KEYS.PAYMENT, JSON.stringify(paymentInfo));
+      renderPaymentInputs();
+      updateQuotePreview();
+    }
+
+    function resetDefaultZaloPay() {
+      paymentInfo = { ...DEFAULT_PAYMENT_INFO };
+      localStorage.setItem(STORAGE_KEYS.PAYMENT, JSON.stringify(paymentInfo));
+      renderPaymentInputs();
+      updateQuotePreview();
+      showToast("Đã đặt lại thông tin nhận tiền: ZaloPay — 0348107225 — NGUYEN VAN BAC", "success");
+    }
+
+    function handleCustomQrUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          // Compress image via canvas so it fits neatly in localStorage
+          const canvas = document.createElement("canvas");
+          const maxDim = 600;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.86);
+
+          try {
+            localStorage.setItem(STORAGE_KEYS.CUSTOM_QR, compressedDataUrl);
+            customQrDataUrl = compressedDataUrl;
+            qrDisplayMode = "custom";
+            localStorage.setItem(STORAGE_KEYS.QR_MODE, "custom");
+            renderPaymentInputs();
+            updateQuotePreview();
+            showToast("Đã tải lên & lưu ảnh QR cá nhân của shop!", "success");
+          } catch (storageErr) {
+            showToast("Ảnh quá nặng, vui lòng chọn ảnh dung lượng nhỏ hơn.", "error");
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeCustomQrImage() {
+      localStorage.removeItem(STORAGE_KEYS.CUSTOM_QR);
+      customQrDataUrl = "";
+      qrDisplayMode = "vietqr";
+      localStorage.setItem(STORAGE_KEYS.QR_MODE, "vietqr");
+      document.getElementById("custom-qr-file-input").value = "";
+      renderPaymentInputs();
+      updateQuotePreview();
+      showToast("Đã xóa ảnh QR cá nhân, quay về VietQR tự động.", "info");
+    }
+
+    function setQrDisplayMode(mode) {
+      if (mode === "custom" && !customQrDataUrl) {
+        showToast("Bạn chưa tải ảnh QR cá nhân lên — bấm 'Tải ảnh QR của shop' để thêm nhé!", "info");
+        document.getElementById("custom-qr-file-input").click();
+        return;
+      }
+      qrDisplayMode = mode;
+      localStorage.setItem(STORAGE_KEYS.QR_MODE, mode);
+      updateQuotePreview();
+    }
+
+    function updateQuotePreview() {
+      const orderCode = document.getElementById("q-order-code").value.trim() || "SF-101";
+      const customerName = document.getElementById("q-customer-name").value.trim() || "Khách hàng";
+      const topic = document.getElementById("q-topic").value.trim() || "Thiết kế Slide thuyết trình";
+      const tier = document.getElementById("q-tier").value;
+      const slides = Math.max(1, parseInt(document.getElementById("q-slide-count").value, 10) || 1);
+      const deadlineText = document.getElementById("q-deadline-text").value.trim() || "Theo thỏa thuận";
+      const deposit = Math.max(0, parseInt(document.getElementById("q-deposit").value, 10) || 0);
+      const discount = Math.max(0, parseInt(document.getElementById("q-discount").value, 10) || 0);
+      const note = document.getElementById("q-note").value.trim();
+
+      const unitPrice = tier === "student" ? pricingConfig.student : pricingConfig.uni;
+      const baseCost = slides * unitPrice;
+
+      // Update add-on labels
+      document.getElementById("lbl-addon-express").textContent = `+${formatVND(pricingConfig.express)}`;
+      document.getElementById("lbl-addon-urgent").textContent = `+${formatVND(pricingConfig.urgent)}`;
+      document.getElementById("lbl-addon-content").textContent = `+${formatVND(pricingConfig.content)}`;
+      document.getElementById("lbl-addon-animation").textContent = `+${formatVND(pricingConfig.animation)}`;
+
+      const items = [
+        {
+          label: `Thiết kế ${slides} slides (${tier === "student" ? "Học sinh" : "SV / Giáo viên"} × ${formatVND(unitPrice)})`,
+          amount: baseCost
+        }
+      ];
+
+      let addonsTotal = 0;
+      if (document.getElementById("addon-express").checked) {
+        addonsTotal += pricingConfig.express;
+        items.push({ label: "Phụ phí gói Siêu tốc (<6h)", amount: pricingConfig.express });
+      }
+      if (document.getElementById("addon-urgent").checked) {
+        addonsTotal += pricingConfig.urgent;
+        items.push({ label: "Phụ phí gói Gấp (<24h)", amount: pricingConfig.urgent });
+      }
+      if (document.getElementById("addon-content").checked) {
+        addonsTotal += pricingConfig.content;
+        items.push({ label: "Biên tập & tóm tắt nội dung", amount: pricingConfig.content });
+      }
+      if (document.getElementById("addon-animation").checked) {
+        addonsTotal += pricingConfig.animation;
+        items.push({ label: "Hiệu ứng chuyển động nâng cao", amount: pricingConfig.animation });
+      }
+
+      const subtotal = baseCost + addonsTotal;
+      const finalAmount = Math.max(0, subtotal - discount - deposit);
+
+      // Update Quote Card DOM
+      document.getElementById("card-order-code").textContent = `#${orderCode}`;
+      document.getElementById("card-customer-name").textContent = customerName;
+      document.getElementById("card-topic").textContent = topic;
+      document.getElementById("card-deadline").textContent = deadlineText;
+
+      document.getElementById("card-items-list").innerHTML = items.map((item) => `
+        <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 last:border-b-0 last:pb-0">
+          <span class="text-slate-600">${escapeHtml(item.label)}</span>
+          <span class="font-bold text-slate-800 whitespace-nowrap">${formatVND(item.amount)}</span>
+        </div>
+      `).join("");
+
+      document.getElementById("card-subtotal").textContent = formatVND(subtotal);
+
+      const discountRow = document.getElementById("card-discount-row");
+      if (discount > 0) {
+        discountRow.classList.remove("hidden");
+        document.getElementById("card-discount").textContent = `-${formatVND(discount)}`;
+      } else {
+        discountRow.classList.add("hidden");
+      }
+
+      const depositRow = document.getElementById("card-deposit-row");
+      if (deposit > 0) {
+        depositRow.classList.remove("hidden");
+        document.getElementById("card-deposit").textContent = `-${formatVND(deposit)}`;
+      } else {
+        depositRow.classList.add("hidden");
+      }
+
+      document.getElementById("card-final-amount").textContent = formatVND(finalAmount);
+      document.getElementById("card-footer-note").textContent = note || "Cảm ơn bạn đã tin tưởng SlideFlow Studio!";
+
+      // Payment Receiver Details on Quote Card
+      const bankCode = paymentInfo.bankCode || "zalopay";
+      const accountNo = paymentInfo.accountNo || "0348107225";
+      const accountName = paymentInfo.accountName || "NGUYEN VAN BAC";
+      const bankLabel = BANK_LABELS[bankCode] || bankCode;
+      const cleanOrderCode = orderCode.replace(/[^a-zA-Z0-9]/g, "");
+      const cleanCustomer = removeVietnameseTones(customerName).replace(/[^a-zA-Z0-9 ]/g, "").trim();
+      const addInfo = `${cleanOrderCode} ${cleanCustomer}`.trim();
+
+      document.getElementById("card-bank-label").textContent = bankLabel;
+      document.getElementById("card-account-name").textContent = accountName;
+      document.getElementById("card-account-no").textContent = accountNo;
+      document.getElementById("card-transfer-note").innerHTML = `Nội dung CK: <strong class="text-slate-700">${escapeHtml(addInfo)}</strong>`;
+
+      // Update Copy STK button label dynamically
+      const copyStkBtn = document.getElementById("btn-copy-stk");
+      copyStkBtn.innerHTML = `<i class="fa-regular fa-copy"></i><span>Copy STK (${escapeHtml(accountNo)})</span>`;
+
+      // QR Mode Switcher Styling & Image Source
+      const btnVietQr = document.getElementById("btn-qr-vietqr");
+      const btnCustomQr = document.getElementById("btn-qr-custom");
+      const qrImgEl = document.getElementById("quote-qr-image");
+
+      if (qrDisplayMode === "custom" && customQrDataUrl) {
+        btnCustomQr.className = "px-3 py-1 rounded-lg text-[11px] font-bold bg-sky-600 text-white transition";
+        btnVietQr.className = "px-3 py-1 rounded-lg text-[11px] font-bold text-slate-600 hover:text-sky-700 transition";
+        qrImgEl.src = customQrDataUrl;
+      } else {
+        btnVietQr.className = "px-3 py-1 rounded-lg text-[11px] font-bold bg-sky-600 text-white transition";
+        btnCustomQr.className = "px-3 py-1 rounded-lg text-[11px] font-bold text-slate-600 hover:text-sky-700 transition";
+        const vietQrUrl = `https://img.vietqr.io/image/${encodeURIComponent(bankCode)}-${encodeURIComponent(accountNo)}-compact2.png?amount=${finalAmount}&addInfo=${encodeURIComponent(addInfo)}&accountName=${encodeURIComponent(accountName)}`;
+        qrImgEl.src = vietQrUrl;
+        qrImgEl.onerror = function () {
+          this.onerror = null;
+          this.src = `https://placehold.co/300x300/e0f2fe/0369a1?text=QR+${encodeURIComponent(accountNo)}`;
+        };
+      }
+
+      // Refresh Zalo Message Template
+      updateZaloTemplateBox({
+        orderCode,
+        customerName,
+        topic,
+        slides,
+        deadlineText,
+        subtotal,
+        deposit,
+        finalAmount,
+        addInfo,
+        bankLabel,
+        accountNo,
+        accountName
+      });
+    }
+
+    function copyAccountNumber() {
+      const stk = paymentInfo.accountNo || "0348107225";
+      copyTextToClipboard(stk);
+      showToast(`Đã copy STK: ${stk} (${paymentInfo.bankLabel} — ${paymentInfo.accountName})`, "success");
+    }
+
+    function toggleScreenshotMode() {
+      isScreenshotMode = !isScreenshotMode;
+      const controlsPanel = document.getElementById("quote-controls-panel");
+      const previewCol = document.getElementById("quote-preview-column");
+      const lbl = document.getElementById("lbl-screenshot-mode");
+      const qrSwitcher = document.getElementById("qr-mode-switcher");
+
+      if (isScreenshotMode) {
+        controlsPanel.classList.add("hidden");
+        previewCol.classList.remove("lg:col-span-5");
+        previewCol.classList.add("lg:col-span-12", "max-w-md", "mx-auto", "w-full");
+        qrSwitcher.classList.add("hidden");
+        lbl.textContent = "Thoát chế độ chụp ảnh";
+        showToast("Đã bật Chế độ chụp ảnh gửi khách — gọn đẹp để chụp màn hình!", "info");
+      } else {
+        controlsPanel.classList.remove("hidden");
+        previewCol.classList.add("lg:col-span-5");
+        previewCol.classList.remove("lg:col-span-12", "max-w-md", "mx-auto", "w-full");
+        qrSwitcher.classList.remove("hidden");
+        lbl.textContent = "Chế độ chụp ảnh gửi khách";
+      }
+    }
+
+    // =========================================================================
+    // 8. 4 ZALO MESSAGE TEMPLATES WITH AUTO ZALOPAY INFO
+    // =========================================================================
+    function selectZaloTemplate(key) {
+      activeZaloTemplateKey = key;
+      const keys = ["confirm", "quote", "draft", "handover"];
+      keys.forEach((k) => {
+        const btn = document.getElementById(`ztpl-btn-${k}`);
+        if (k === key) {
+          btn.className = "ztpl-btn px-3 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white transition";
+        } else {
+          btn.className = "ztpl-btn px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition";
+        }
+      });
+      updateQuotePreview();
+    }
+
+    function updateZaloTemplateBox(ctx) {
+      const paymentLine = `💳 Thông tin chuyển khoản: ${ctx.bankLabel}: ${ctx.accountNo} - ${ctx.accountName}`;
+      const templates = {
+        confirm: `Chào ${ctx.customerName}, SlideFlow Studio xác nhận đã tiếp nhận đơn #${ctx.orderCode} của bạn nhé!\n` +
+          `📌 Chủ đề: ${ctx.topic}\n` +
+          `📊 Số lượng: ${ctx.slides} slides\n` +
+          `⏰ Deadline bàn giao: ${ctx.deadlineText}\n` +
+          `💰 Tổng chi phí: ${formatVND(ctx.subtotal)}${ctx.deposit > 0 ? ` (Đã cọc ${formatVND(ctx.deposit)}, còn lại ${formatVND(ctx.finalAmount)})` : ""}\n` +
+          `${paymentLine}\n` +
+          `📝 Nội dung CK: ${ctx.addInfo}\n` +
+          `Team đang bắt tay vào làm ngay để kịp tiến độ cho bạn nha!`,
+
+        quote: `Chào ${ctx.customerName}, mình gửi bạn báo giá chi tiết cho bộ slide "${ctx.topic}" (#${ctx.orderCode}):\n` +
+          `• Quy mô: ${ctx.slides} slides\n` +
+          `• Thời gian hoàn thành: ${ctx.deadlineText}\n` +
+          `• Tổng thanh toán: ${formatVND(ctx.finalAmount)}\n\n` +
+          `${paymentLine}\n` +
+          `📝 Nội dung CK: ${ctx.addInfo}\n` +
+          `Bạn xác nhận giúp mình để team triển khai ngay nhé!`,
+
+        draft: `Chào ${ctx.customerName}, team đã hoàn thành bản nháp cho đơn #${ctx.orderCode} (${ctx.topic}) rồi ạ!\n` +
+          `Bạn xem qua bố cục & nội dung giúp mình xem cần chỉnh sửa điểm nào không nhé (hỗ trợ chỉnh sửa miễn phí 2 lần).\n\n` +
+          `Sau khi ưng ý, bạn thanh toán giúp mình phần còn lại: ${formatVND(ctx.finalAmount)}\n` +
+          `${paymentLine}\n` +
+          `📝 Nội dung CK: ${ctx.addInfo}\n` +
+          `Nhận được thanh toán mình gửi ngay file gốc PPTX/Canva chất lượng cao nha!`,
+
+        handover: `Cảm ơn ${ctx.customerName} đã thanh toán đầy đủ cho đơn #${ctx.orderCode}!\n` +
+          `🎉 Mình gửi bạn trọn bộ file gốc thiết kế + font chữ đính kèm bên dưới nhé.\n` +
+          `Chúc bạn có buổi thuyết trình thật tự tin và đạt kết quả cao! Nếu cần hỗ trợ chỉnh sửa nhỏ trước giờ thuyết trình cứ nhắn ngay cho SlideFlow Studio nha ❤️`
+      };
+
+      document.getElementById("zalo-template-textarea").value = templates[activeZaloTemplateKey] || templates.confirm;
+    }
+
+    function copyZaloTemplateText() {
+      const text = document.getElementById("zalo-template-textarea").value;
+      copyTextToClipboard(text);
+      showToast("Đã copy mẫu tin nhắn Zalo! Dán gửi khách ngay nhé.", "success");
+    }
+
+    // =========================================================================
+    // 9. SETTINGS, PRICING & GOOGLE APPS SCRIPT v3 SYNC (JSONP + CORS)
+    // =========================================================================
+    function renderPricingInputs() {
+      document.getElementById("cfg-price-student").value = pricingConfig.student;
+      document.getElementById("cfg-price-uni").value = pricingConfig.uni;
+      document.getElementById("cfg-fee-express").value = pricingConfig.express;
+      document.getElementById("cfg-fee-urgent").value = pricingConfig.urgent;
+      document.getElementById("cfg-fee-content").value = pricingConfig.content;
+      document.getElementById("cfg-fee-animation").value = pricingConfig.animation;
+    }
+
+    function savePricingConfig() {
+      pricingConfig = {
+        student: Math.max(0, parseInt(document.getElementById("cfg-price-student").value, 10) || 2000),
+        uni: Math.max(0, parseInt(document.getElementById("cfg-price-uni").value, 10) || 5000),
+        express: Math.max(0, parseInt(document.getElementById("cfg-fee-express").value, 10) || 15000),
+        urgent: Math.max(0, parseInt(document.getElementById("cfg-fee-urgent").value, 10) || 10000),
+        content: Math.max(0, parseInt(document.getElementById("cfg-fee-content").value, 10) || 10000),
+        animation: Math.max(0, parseInt(document.getElementById("cfg-fee-animation").value, 10) || 10000)
+      };
+      localStorage.setItem(STORAGE_KEYS.PRICING, JSON.stringify(pricingConfig));
+      updateQuotePreview();
+      showToast("Đã lưu cấu hình bảng giá mặc định!", "success");
+    }
+
+    function checkUrlApiAutoConnect() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const apiParam = urlParams.get("api");
+      if (apiParam && apiParam.startsWith("https://script.google.com/")) {
+        localStorage.setItem(STORAGE_KEYS.SCRIPT_URL, apiParam);
+        document.getElementById("apps-script-url-input").value = apiParam;
+        updateTeamShareLinkField();
+      }
+      const savedUrl = localStorage.getItem(STORAGE_KEYS.SCRIPT_URL);
+      if (savedUrl) {
+        syncFromGoogleSheet(true);
+        if (autoSyncInterval) clearInterval(autoSyncInterval);
+        autoSyncInterval = setInterval(() => syncFromGoogleSheet(true), 45000);
+      }
+    }
+
+    function saveAndConnectScript() {
+      const url = document.getElementById("apps-script-url-input").value.trim();
+      if (!url || !url.startsWith("https://script.google.com/")) {
+        showToast("Vui lòng dán đúng đường link Google Apps Script đuôi /exec!", "error");
+        return;
+      }
+      localStorage.setItem(STORAGE_KEYS.SCRIPT_URL, url);
+      updateTeamShareLinkField();
+      showToast("Đã lưu liên kết Google Sheets! Đang đồng bộ thời gian thực...", "success");
+      syncFromGoogleSheet(false);
+    }
+
+    function updateTeamShareLinkField() {
+      const scriptUrl = localStorage.getItem(STORAGE_KEYS.SCRIPT_URL) || "";
+      const baseUrl = window.location.origin + window.location.pathname;
+      const shareUrl = scriptUrl ? `${baseUrl}?api=${encodeURIComponent(scriptUrl)}` : baseUrl;
+      document.getElementById("team-share-link-input").value = shareUrl;
+    }
+
+    function copyTeamShareLink() {
+      const shareUrl = document.getElementById("team-share-link-input").value;
+      copyTextToClipboard(shareUrl);
+      showToast("Đã copy Link chia sẻ nhanh cho cả Team!", "success");
+    }
+
+    function copyAppsScriptCode() {
+      const code = document.getElementById("apps-script-v3-code").textContent;
+      copyTextToClipboard(code);
+      showToast("Đã copy Mã Google Apps Script v3!", "success");
+    }
+
+    function setSyncUiState(state, labelText) {
+      const dot = document.getElementById("sync-dot");
+      const lbl = document.getElementById("sync-label");
+      const icon = document.getElementById("sync-icon");
+
+      lbl.textContent = labelText;
+      if (state === "syncing") {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping";
+        icon.classList.add("fa-spin");
+      } else if (state === "live") {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-soft-pulse";
+        icon.classList.remove("fa-spin");
+      } else {
+        dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+        icon.classList.remove("fa-spin");
+      }
+    }
+
+    function syncFromGoogleSheet(silent = false) {
+      const scriptUrl = localStorage.getItem(STORAGE_KEYS.SCRIPT_URL);
+      if (!scriptUrl) {
+        if (!silent) showToast("Bạn chưa dán URL Google Apps Script ở tab Bảng Giá & Kết Nối Form!", "info");
+        return;
+      }
+
+      setSyncUiState("syncing", "Đang đồng bộ...");
+      if (!silent) showToast("Đang kéo dữ liệu mới nhất từ Google Sheets...", "info");
+
+      // JSONP Request (bypasses CORS cleanly on GitHub Pages)
+      const callbackName = "sfJsonpCb_" + Date.now();
+      const scriptTag = document.createElement("script");
+      let isCompleted = false;
+
+      const timeoutTimer = setTimeout(() => {
+        if (isCompleted) return;
+        isCompleted = true;
+        cleanupJsonp();
+        setSyncUiState("error", "LIVE | Lỗi kết nối Script");
+        if (!silent) {
+          showToast("Không thể kết nối: Script chưa cập nhật Code v3 hoặc chưa chọn quyền 'Bất kỳ ai (Anyone)'.", "error");
+        }
+      }, 10000);
+
+      function cleanupJsonp() {
+        clearTimeout(timeoutTimer);
+        if (scriptTag.parentNode) scriptTag.parentNode.removeChild(scriptTag);
+        delete window[callbackName];
+      }
+
+      window[callbackName] = function (response) {
+        if (isCompleted) return;
+        isCompleted = true;
+        cleanupJsonp();
+
+        if (response && response.status === "ok" && Array.isArray(response.orders)) {
+          mergeSheetOrders(response.orders);
+          const nowTime = new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+          setSyncUiState("live", `LIVE | Đã đồng bộ (${nowTime})`);
+          if (!silent) {
+            showToast(`Đồng bộ thành công ${response.orders.length} đơn từ Google Sheets!`, "success");
+          }
+        } else {
+          setSyncUiState("error", "LIVE | Lỗi dữ liệu Sheet");
+          if (!silent) {
+            showToast("Script phản hồi lỗi. Hãy kiểm tra lại tên Sheet trong Code v3.", "error");
+          }
+        }
+      };
+
+      const separator = scriptUrl.includes("?") ? "&" : "?";
+      scriptTag.src = `${scriptUrl}${separator}action=getOrders&callback=${callbackName}`;
+      scriptTag.onerror = function () {
+        if (isCompleted) return;
+        isCompleted = true;
+        cleanupJsonp();
+        setSyncUiState("error", "LIVE | Lỗi kết nối");
+        if (!silent) {
+          showToast("Không thể kết nối: Script chưa cập nhật Code v3 hoặc chưa chọn quyền 'Bất kỳ ai (Anyone)'.", "error");
+        }
+      };
+      document.body.appendChild(scriptTag);
+    }
+
+    function mergeSheetOrders(sheetRows) {
+      sheetRows.forEach((row) => {
+        const sheetOrderId = `GS-${row.rowIndex}`;
+        const existingIdx = orders.findIndex((o) => o.id === sheetOrderId || o.rowIndex === row.rowIndex);
+        const unitPrice = row.tier === "student" ? pricingConfig.student : pricingConfig.uni;
+        const urgText = (row.urgency || "").toLowerCase();
+        let extra = 0;
+        let urgencyKey = "normal";
+        if (urgText.includes("siêu tốc")) {
+          extra = pricingConfig.express;
+          urgencyKey = "express";
+        } else if (urgText.includes("gấp")) {
+          extra = pricingConfig.urgent;
+          urgencyKey = "urgent";
+        }
+
+        const calcTotal = (row.slideCount || 10) * unitPrice + extra;
+        const parsedDeadline = row.deadline && !isNaN(new Date(row.deadline).getTime())
+          ? row.deadline
+          : new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+
+        if (existingIdx !== -1) {
+          orders[existingIdx].customerName = row.customerName || orders[existingIdx].customerName;
+          orders[existingIdx].contact = row.contact || orders[existingIdx].contact;
+          orders[existingIdx].topic = row.topic || orders[existingIdx].topic;
+          orders[existingIdx].status = row.status || orders[existingIdx].status;
+          orders[existingIdx].rowIndex = row.rowIndex;
+        } else {
+          orders.unshift({
+            id: sheetOrderId,
+            customerName: row.customerName,
+            contact: row.contact,
+            topic: row.topic,
+            tier: row.tier,
+            slideCount: row.slideCount,
+            urgency: urgencyKey,
+            deadline: parsedDeadline,
+            totalAmount: calcTotal,
+            paidAmount: 0,
+            status: row.status || "Mới tiếp nhận",
+            note: row.note || "",
+            rowIndex: row.rowIndex
+          });
+        }
+      });
+
+      saveOrdersToStorage();
+      renderOrders();
+      populateQuoteOrderDropdown();
+    }
+
+    function pushStatusToGoogleSheet(rowIndex, newStatus) {
+      const scriptUrl = localStorage.getItem(STORAGE_KEYS.SCRIPT_URL);
+      if (!scriptUrl || !rowIndex) return;
+      const cb = "sfPushCb_" + Date.now();
+      const s = document.createElement("script");
+      window[cb] = function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        delete window[cb];
+      };
+      const sep = scriptUrl.includes("?") ? "&" : "?";
+      s.src = `${scriptUrl}${sep}action=updateStatus&rowIndex=${encodeURIComponent(rowIndex)}&newStatus=${encodeURIComponent(newStatus)}&callback=${cb}`;
+      document.body.appendChild(s);
+    }
+
+    function exportOrdersCSV() {
+      const headers = ["Ma Don", "Khach Hang", "Lien He", "Chu De", "So Slide", "Tong Tien", "Da Thanh Toan", "Trang Thai", "Deadline"];
+      const rows = orders.map((o) => [
+        o.id,
+        `"${(o.customerName || "").replace(/"/g, '""')}"`,
+        `"${(o.contact || "").replace(/"/g, '""')}"`,
+        `"${(o.topic || "").replace(/"/g, '""')}"`,
+        o.slideCount,
+        o.totalAmount,
+        o.paidAmount,
+        `"${o.status}"`,
+        `"${formatShortDateTime(o.deadline)}"`
+      ]);
+      const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `SlideFlow_DonHang_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Đã xuất file CSV danh sách đơn hàng!", "success");
+    }
+
+    function restoreSampleOrders() {
+      orders = getDefaultSampleOrders();
+      saveOrdersToStorage();
+      renderOrders();
+      populateQuoteOrderDropdown();
+      showToast("Đã khôi phục 3 đơn hàng mẫu!", "info");
+    }
+
+    // =========================================================================
+    // 10. HELPER UTILITIES (CLIPBOARD, TOAST, FORMATTING)
+    // =========================================================================
+    function copyTextToClipboard(text) {
+      const tempInput = document.createElement("textarea");
+      tempInput.value = text;
+      tempInput.style.position = "fixed";
+      tempInput.style.opacity = "0";
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      try {
+        document.execCommand("copy");
+      } catch (err) {
+        console.error("Copy thất bại:", err);
+      }
+      document.body.removeChild(tempInput);
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+
+      const styles = {
+        success: "bg-emerald-600 text-white border-emerald-500",
+        error: "bg-rose-600 text-white border-rose-500",
+        info: "bg-slate-900 text-white border-slate-700"
+      };
+      const icons = {
+        success: "fa-circle-check",
+        error: "fa-circle-exclamation",
+        info: "fa-circle-info"
+      };
+
+      toast.className = `pointer-events-auto flex items-start gap-2.5 px-4 py-3 rounded-2xl shadow-lg border text-xs sm:text-sm font-semibold transition-all duration-300 ${styles[type] || styles.info}`;
+      toast.innerHTML = `
+        <i class="fa-solid ${icons[type] || icons.info} mt-0.5 shrink-0"></i>
+        <span class="leading-snug">${escapeHtml(message)}</span>
+      `;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-8px)";
+        setTimeout(() => {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 300);
+      }, 3600);
+    }
+
+    function formatVND(amount) {
+      const num = Number(amount) || 0;
+      return num.toLocaleString("vi-VN") + "đ";
+    }
+
+    function formatShortDateTime(isoStr) {
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return "Chưa hẹn";
+      const hh = String(d.getHours()).padStart(2, "0");
+      const min = String(d.getMinutes()).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      return `${hh}:${min} ${dd}/${mm}`;
+    }
+
+    function toLocalDatetimeInputValue(isoStr) {
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return "";
+      const offsetMs = d.getTimezoneOffset() * 60000;
+      return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16);
+    }
+
+    function removeVietnameseTones(str) {
+      return (str || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D");
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
