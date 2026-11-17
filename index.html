@@ -47,7 +47,7 @@
       <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-extrabold text-xl flex items-center justify-center mx-auto shadow-lg shadow-indigo-500/30">
         SF
       </div>
-      <h1 class="mt-4 text-xl font-extrabold text-slate-900 tracking-tight">SlideFlow Studio <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 align-middle">v3.2</span></h1>
+      <h1 class="mt-4 text-xl font-extrabold text-slate-900 tracking-tight">SlideFlow Studio <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 align-middle">v3.3</span></h1>
       <p class="text-xs text-slate-500 mt-1">Khu vực điều phối nội bộ • Nhập mã PIN 4 số</p>
 
       <!-- 4 PIN Indicator Dots -->
@@ -127,7 +127,7 @@
 
         <!-- Urgent Bell Button -->
         <button type="button" id="urgentBellBtn" onclick="jumpToUrgentRadar()" class="relative p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 text-slate-700 transition" title="Cảnh báo đơn sắp tới hạn">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.359c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
           <span id="urgentBadgeCount" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center">0</span>
         </button>
 
@@ -547,7 +547,7 @@
         </div>
       </div>
 
-      <!-- RIGHT COLUMN: GOOGLE SHEETS & APPS SCRIPT v3.1 -->
+      <!-- RIGHT COLUMN: GOOGLE SHEETS & APPS SCRIPT v3.3 -->
       <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-5 sm:p-6 flex flex-col gap-4">
         <div>
           <span class="inline-block px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-extrabold uppercase tracking-wider">Automation Google Sheets + Form v3.3</span>
@@ -565,6 +565,14 @@
           </div>
         </div>
 
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Khóa ghi trạng thái</label>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input id="writeKeyInput" type="password" autocomplete="off" placeholder="Nhập cùng khóa WRITE_KEY trong Apps Script" class="flex-1 px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white" />
+            <button type="button" onclick="saveWriteKey()" class="px-5 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shrink-0 transition">Lưu khóa</button>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Khóa này chỉ dùng để cập nhật trạng thái về Sheet và không nằm trong Link Team.</p>
+        </div>
         <!-- Team Share Link Box -->
         <div class="rounded-2xl bg-indigo-50/70 border border-indigo-200/80 p-3.5">
           <div class="flex items-center justify-between gap-2 mb-1.5">
@@ -576,7 +584,7 @@
           <input id="teamShareLinkOutput" type="text" readonly class="w-full px-3 py-2 rounded-xl bg-white border border-indigo-200 text-[11px] font-mono text-slate-600 focus:outline-none" />
         </div>
 
-        <!-- Apps Script v3.1 Code Viewer -->
+        <!-- Apps Script v3.3 Code Viewer -->
         <div class="mt-1">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-extrabold text-slate-800">Mã Google Apps Script v3.3 (Chuẩn 29 cột Form + Chống lỗi CORS)</span>
@@ -1989,7 +1997,8 @@ function doGet(e) {
       document.getElementById('cfgAccountHolder').value = state.bank.accountHolder;
 
       document.getElementById('gasUrlInput').value = state.gasUrl;
-      document.getElementById('writeKeyInput').value = state.writeKey || '';
+      const writeKeyEl = document.getElementById('writeKeyInput');
+      if (writeKeyEl) writeKeyEl.value = state.writeKey || '';
       document.getElementById('gasCodeBlock').textContent = GAS_V31_TEMPLATE;
       updateTeamShareLink();
     }
@@ -2041,7 +2050,8 @@ function doGet(e) {
     }
 
     function saveWriteKey() {
-      state.writeKey = document.getElementById('writeKeyInput').value.trim();
+      const el = document.getElementById('writeKeyInput');
+      state.writeKey = el ? el.value.trim() : '';
       safeSetStorage(STORAGE_KEYS.WRITE_KEY, state.writeKey);
       showToast(state.writeKey ? 'Đã lưu khóa ghi trạng thái trên thiết bị này.' : 'Đã xóa khóa ghi trạng thái.', 'success');
     }
