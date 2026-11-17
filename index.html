@@ -697,238 +697,240 @@ function doGet(e) {
 
   try {
     if (action === "updateStatus" && params.rowIndex && params.newStatus) {
-      const row = parseInt(params.rowIndex, 10);
-      const lastCol = Math.max(sheet.getLastColumn(), 10);
-      const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-      let statusCol = headers.findIndex(h => String(h).toLowerCase().includes("trạng thái")) + 1;
-      if (statusCol <= 0) {
-        statusCol = lastCol + 1;
-        sheet.getRange(1, statusCol).setValue("Trạng thái");
+          } else if (!silent) {
+            showToast(`Đồng bộ thành công ${orders.length} đơn từ Google Sheets!`, 'success');
+          }
+        } else if (data && data.status === 'error') {
+          if (!silent) showToast(`Lỗi từ Script: ${data.message || 'Không rõ nguyên nhân'}`, 'error');
+        }
+      } catch (err) {
+        if (!silent) showToast(`Lỗi từ Script: ${err.message || 'Không thể kết nối URL Script'}`, 'error');
+      } finally {
+        if (spinner) spinner.classList.remove('animate-spin');
       }
-      sheet.getRange(row, statusCol).setValue(params.newStatus);
-      result.message = "Đã cập nhật trạng thái dòng " + row;
     }
 
-    const data = sheet.getDataRange().getValues();
-    if (data.length > 1) {
-      const headers = data[0].map(h => String(h).trim().toLowerCase());
-      for (let i = 1; i < data.length; i++) {
-        const row = data[i];
-        if (!row.join("").trim()) continue;
-        result.orders.push({
-          rowIndex: i + 1,
-          timestamp: row[0] ? new Date(row[0]).toISOString() : "",
-          customerName: String(row[1] || "Khách Form #" + i),
-          contact: String(row[2] || ""),
-          topic: String(row[3] || "Thiết kế Slide theo yêu cầu"),
-          tier: String(row[4] || "").toLowerCase().includes("học sinh") ? "student" : "uni",
-          slideCount: parseInt(row[5], 10) || 10,
-          deadline: row[6] ? new Date(row[6]).toISOString() : "",
-          urgency: String(row[7] || ""),
-          note: String(row[8] || ""),
-          status: String(row[9] || "Mới tiếp nhận")
+    async function pushOrderToCloud(orderObj) {
+      const url = localStorage.getItem(STORAGE_KEYS.GAS_URL);
+      if (!url) return;
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'upsertOrder', order: orderObj })
         });
+        const data = await res.json().catch(() => null);
+        if (data && data.status === 'error') {
+          showToast(`Lỗi từ Script: ${data.message || 'Không rõ nguyên nhân'}`, 'error');
+          return;
+        }
+        lastSyncTimestamp = Date.now();
+        updateSyncAgeLabel();
+      } catch (e) {
+        console.warn('Cloud push fallback/skipped:', e);
       }
     }
-  } catch (err) {
-    result = { status: "error", message: err.toString() };
-  }
+    function populateGasCodeSnippet() {
+      const code = `// =========================================================================
+// SLIDEFLOW STUDIO v3 — GOOGLE APPS SCRIPT REAL-TIME (AUTO-DETECT SHEET)
+// =========================================================================
+const SPREADSHEET_ID = "1iD0j5ZJW22k9ZKmU3gYgV01Hr4xuIYJjsL5mP9nzyDs";
+const SHEET_NAME = "Câu trả lời biểu mẫu 1";
+// (Tùy chọn) Dán Bot Token & Chat ID Telegram nếu muốn nhận tin nhắn ngay khi khách gửi Form
+const TELEGRAM_BOT_TOKEN = "";
+const TELEGRAM_CHAT_ID = "";
 
-  const output = JSON.stringify(result);
+function getTargetSpreadsheetAndSheet() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  }
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    const sheets = ss.getSheets();
+    for (let i = 0; i < sheets.length; i++) {
+      const s = sheets[i];
+      const nameNorm = s.getName().trim().toLowerCase();
+      const a1Val = String(s.getRange(1, 1).getValue() || "").trim().toLowerCase();
+      if (
+        nameNorm === "câu trả lời biểu mẫu 1" ||
+        nameNorm.indexOf("biểu mẫu") !== -1 ||
+        nameNorm.indexOf("form responses") !== -1 ||
+        a1Val.indexOf("dấu thời gian") !== -1
+      ) {
+        sheet = s;
+        break;
+      }
+    }
+  }
+  if (!sheet) {
+    throw new Error("Không tìm thấy tab dữ liệu Form (Câu trả lời biểu mẫu 1) trong file Sheets!");
+  }
+  return { ss: ss, sheet: sheet };
+}
+
+function formatCellDateSafe(val) {
+  if (!val) return "";
+  if (Object.prototype.toString.call(val) === "[object Date]" && !isNaN(val.getTime())) {
+    return Utilities.formatDate(val, "GMT+7", "yyyy-MM-dd'T'HH:mm");
+  }
+  return String(val);
+}
+
+function createJsonOrJsonpResponse(e, payloadObj) {
+  const jsonStr = JSON.stringify(payloadObj);
+  const callback = e && e.parameter && e.parameter.callback;
   if (callback) {
-    return ContentService.createTextOutput(callback + "(" + output + ")")
+    return ContentService.createTextOutput(callback + "(" + jsonStr + ")")
       .setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
-  return ContentService.createTextOutput(output)
+  return ContentService.createTextOutput(jsonStr)
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function onFormSubmitTrigger(e) {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
-  const values = e && e.values ? e.values : [];
-  const msg = "📥 ĐƠN SLIDE MỚI TỪ FORM!\n" +
-    "👤 Khách: " + (values[1] || "N/A") + "\n" +
-    "📞 Liên hệ: " + (values[2] || "N/A") + "\n" +
-    "📌 Chủ đề: " + (values[3] || "N/A") + "\n" +
-    "📊 Số slide: " + (values[5] || "N/A");
-  UrlFetchApp.fetch("https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage", {
-    method: "post",
-    contentType: "application/json",
-    payload: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg })
-  });
-}</pre>
-          </div>
-        </div>
-      </div>
-    </section>
+function doGet(e) {
+  try {
+    const target = getTargetSpreadsheetAndSheet();
+    const sheet = target.sheet;
+    const data = sheet.getDataRange().getValues();
+    const orders = [];
+    for (let i = 1; i < data.length; i++) {
+      const r = data[i];
+      if (!r[1] && !r[4]) continue;
+      const orderId = r[28] ? String(r[28]).trim() : ("DH-" + String(i).padStart(3, "0"));
+      if (!r[28]) sheet.getRange(i + 1, 29).setValue(orderId);
 
-  </div>
+      const rawSlides = String(r[10] || "");
+      const matchedSlides = rawSlides.match(/\\d+/);
+      const slidesCount = Number(r[22]) || (matchedSlides ? parseInt(matchedSlides[0], 10) : 10);
 
-  <!-- ==================== ADD / EDIT ORDER MODAL ==================== -->
-  <div id="order-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 my-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <h3 id="modal-order-title" class="text-lg font-extrabold text-slate-900">Thêm Đơn Hàng Mới</h3>
-        <button type="button" onclick="closeOrderModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
+      orders.push({
+        id: orderId,
+        name: String(r[1] || ("Khách #" + i)).trim(),
+        contact: String(r[3] || "").trim(),
+        type: String(r[2] || "").indexOf("Sinh viên") !== -1 || String(r[2] || "").indexOf("Giáo viên") !== -1
+          ? "Sinh viên / Giáo viên"
+          : "Học sinh",
+        topic: String(r[4] || "Bài thuyết trình").trim(),
+        slides: slidesCount,
+        deadline: formatCellDateSafe(r[18]),
+        urgency: String(r[19] || "Bình thường").trim(),
+        status: String(r[20] || "Chưa làm").trim(),
+        assignee: String(r[29] || "Chưa nhận").trim(),
+        payment: String(r[30] || "Chưa thanh toán").trim(),
+        contentAddon: String(r[14] || "").indexOf("Có") !== -1,
+        effectAddon: String(r[15] || "").indexOf("Nâng cao") !== -1,
+        adjustments: [],
+        notes: String(r[21] || "").trim()
+      });
+    }
+    return createJsonOrJsonpResponse(e, { status: "ok", orders: orders.reverse() });
+  } catch (err) {
+    return createJsonOrJsonpResponse(e, { status: "error", message: err.toString() });
+  }
+}
 
-      <form id="order-form" onsubmit="saveOrderFromModal(event)" class="space-y-3.5 mt-4">
-        <input type="hidden" id="m-order-id" />
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Tên khách hàng *</label>
-            <input id="m-customer-name" type="text" required placeholder="VD: Lan Anh" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">SĐT / Zalo khách</label>
-            <input id="m-contact" type="text" placeholder="VD: 0901234567" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Chủ đề / Yêu cầu Slide *</label>
-          <input id="m-topic" type="text" required placeholder="VD: Báo cáo thực tập Quản trị kinh doanh" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Đối tượng</label>
-            <select id="m-tier" onchange="recalcModalTotal()" class="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold">
-              <option value="student">Học sinh</option>
-              <option value="uni" selected>SV / Giáo viên</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Số Slide</label>
-            <input id="m-slide-count" type="number" min="1" value="12" oninput="recalcModalTotal()" class="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Gói tốc độ</label>
-            <select id="m-urgency" onchange="recalcModalTotal()" class="w-full px-3 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold">
-              <option value="normal">Tiêu chuẩn (+0đ)</option>
-              <option value="urgent">Gấp (+10k)</option>
-              <option value="express">Siêu tốc (+15k)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Hạn chót (Deadline) *</label>
-            <input id="m-deadline" type="datetime-local" required class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Trạng thái</label>
-            <select id="m-status" class="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold">
-              <option value="Mới tiếp nhận">🆕 Mới tiếp nhận</option>
-              <option value="Đang làm">🎨 Đang làm</option>
-              <option value="Gửi nháp">👀 Gửi nháp</option>
-              <option value="Chờ thanh toán">💳 Chờ thanh toán</option>
-              <option value="Hoàn thành">✅ Hoàn thành</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Tổng tiền (VNĐ)</label>
-            <input id="m-total-amount" type="number" step="1000" value="60000" class="w-full px-3.5 py-2.5 rounded-2xl bg-indigo-50/60 border border-indigo-200 text-sm font-extrabold text-indigo-700" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Đã thanh toán / Cọc (VNĐ)</label>
-            <input id="m-paid-amount" type="number" step="1000" value="0" class="w-full px-3.5 py-2.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 text-sm font-bold text-emerald-700" />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Ghi chú đơn hàng</label>
-          <textarea id="m-note" rows="2" placeholder="Yêu cầu tông màu, font chữ, link tài liệu..." class="w-full px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm"></textarea>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
-          <button type="button" onclick="closeOrderModal()" class="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold">Hủy</button>
-          <button type="submit" class="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-sm">Lưu đơn hàng</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ==================== JAVASCRIPT APPLICATION LOGIC ==================== -->
-  <script>
-    // =========================================================================
-    // 1. DEFAULT CONSTANTS & STORAGE KEYS
-    // =========================================================================
-    const STORAGE_KEYS = {
-      PIN: "sf_v3_pin",
-      UNLOCKED: "sf_v3_unlocked",
-      ORDERS: "sf_v3_orders",
-      PRICING: "sf_v3_pricing",
-      PAYMENT: "sf_v3_payment",
-      CUSTOM_QR: "sf_v3_custom_qr_img",
-      QR_MODE: "sf_v3_qr_display_mode",
-      SCRIPT_URL: "sf_v3_apps_script_url"
-    };
-
-    // Pre-configured Shop Payment Receiver (ZaloPay - 0348107225 - NGUYEN VAN BAC)
-    const DEFAULT_PAYMENT_INFO = {
-      bankCode: "zalopay",
-      bankLabel: "Ví ZaloPay",
-      accountNo: "0348107225",
-      accountName: "NGUYEN VAN BAC"
-    };
-
-    const BANK_LABELS = {
-      zalopay: "Ví ZaloPay",
-      MB: "MB Bank (Quân Đội)",
-      VCB: "Vietcombank",
-      TCB: "Techcombank",
-      BIDV: "BIDV",
-      ACB: "ACB",
-      VPB: "VPBank",
-      TPB: "TPBank"
-    };
-
-    const DEFAULT_PRICING = {
-      student: 2000,
-      uni: 5000,
-      express: 15000,
-      urgent: 10000,
-      content: 10000,
-      animation: 10000
-    };
-
-    // State Variables
-    let currentPinBuffer = "";
-    let orders = [];
-    let pricingConfig = { ...DEFAULT_PRICING };
-    let paymentInfo = { ...DEFAULT_PAYMENT_INFO };
-    let customQrDataUrl = "";
-    let qrDisplayMode = "vietqr"; // 'vietqr' or 'custom'
-    let activeZaloTemplateKey = "confirm";
-    let isScreenshotMode = false;
-    let countdownInterval = null;
-    let autoSyncInterval = null;
-
-    // =========================================================================
-    // 2. INITIALIZATION ON WINDOW LOAD
-    // =========================================================================
-    window.addEventListener("DOMContentLoaded", () => {
-      try {
-        loadSavedState();
-        updateHeaderDate();
-        checkUrlApiAutoConnect();
-        initPinSystem();
-        renderPricingInputs();
-        renderPaymentInputs();
-        renderOrders();
-        populateQuoteOrderDropdown();
-        updateQuotePreview();
-        startRealtimeTimers();
-      } catch (err) {
-        console.error("Lỗi khởi tạo SlideFlow Studio:", err);
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    if (payload.action === "upsertOrder" && payload.order) {
+      const target = getTargetSpreadsheetAndSheet();
+      const sheet = target.sheet;
+      const data = sheet.getDataRange().getValues();
+      let foundRow = -1;
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][28]).trim() === payload.order.id || String(data[i][1]).trim() === payload.order.name) {
+          foundRow = i + 1;
+          break;
+        }
       }
+      if (foundRow > 0) {
+        sheet.getRange(foundRow, 20).setValue(payload.order.urgency);
+        sheet.getRange(foundRow, 21).setValue(payload.order.status);
+        sheet.getRange(foundRow, 22).setValue(payload.order.notes || "");
+        sheet.getRange(foundRow, 23).setValue(payload.order.slides);
+        sheet.getRange(foundRow, 29).setValue(payload.order.id);
+        sheet.getRange(foundRow, 30).setValue(payload.order.assignee || "Chưa nhận");
+        sheet.getRange(foundRow, 31).setValue(payload.order.payment || "Chưa thanh toán");
+      } else {
+        const newRow = new Array(31).fill("");
+        newRow[0] = new Date();
+        newRow[1] = payload.order.name;
+        newRow[2] = payload.order.type;
+        newRow[3] = payload.order.contact;
+        newRow[4] = payload.order.topic;
+        newRow[18] = payload.order.deadline;
+        newRow[19] = payload.order.urgency;
+        newRow[20] = payload.order.status;
+        newRow[21] = payload.order.notes;
+        newRow[22] = payload.order.slides;
+        newRow[28] = payload.order.id;
+        newRow[29] = payload.order.assignee || "Chưa nhận";
+        newRow[30] = payload.order.payment || "Chưa thanh toán";
+        sheet.appendRow(newRow);
+      }
+    }
+    return createJsonOrJsonpResponse(e, { status: "ok", ok: true });
+  } catch (err) {
+    return createJsonOrJsonpResponse(e, { status: "error", message: err.toString() });
+  }
+}
+
+// Cài Trigger "Khi gửi biểu mẫu (On form submit)" để báo tức thì 0 giây!
+function onFormSubmit(e) {
+  const target = getTargetSpreadsheetAndSheet();
+  const sheet = target.sheet;
+  const lastRow = sheet.getLastRow();
+  const r = sheet.getRange(lastRow, 1, 1, 31).getValues()[0];
+  const orderId = "DH-" + String(lastRow - 1).padStart(3, "0");
+  sheet.getRange(lastRow, 21).setValue("Chưa làm");
+  sheet.getRange(lastRow, 29).setValue(orderId);
+  sheet.getRange(lastRow, 30).setValue("Chưa nhận");
+  sheet.getRange(lastRow, 31).setValue("Chưa thanh toán");
+
+  const msg = "🔥 [SlideFlow] ĐƠN MỚI TỪ FORM!\\n" +
+    "• Mã: " + orderId + " | Khách: " + r[1] + "\\n" +
+    "• Chủ đề: " + r[4] + "\\n" +
+    "• Mức độ: " + (r[19] || "Bình thường") + " | Hạn: " + formatCellDateSafe(r[18]);
+
+  if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+    UrlFetchApp.fetch("https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage", {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg })
+    });
+  } else {
+    MailApp.sendEmail(Session.getActiveUser().getEmail(), "🔔 [SlideFlow] Đơn mới: " + r[1], msg);
+  }
+}
+
+// Cài Trigger chạy mỗi 7h sáng để gửi Email tổng hợp đơn sắp tới hạn
+function sendDailyDeadlineReminder() {
+  const target = getTargetSpreadsheetAndSheet();
+  const sheet = target.sheet;
+  const data = sheet.getDataRange().getValues();
+  const now = new Date();
+  const urgentList = [];
+  for (let i = 1; i < data.length; i++) {
+    const status = String(data[i][20] || "");
+    const deadline = data[i][18] ? new Date(data[i][18]) : null;
+    if (status !== "Done" && deadline && !isNaN(deadline.getTime())) {
+      const diffHours = (deadline - now) / (1000 * 60 * 60);
+      if (diffHours <= 48) {
+        urgentList.push("- " + data[i][1] + " | Chủ đề: " + data[i][4] + " | Hạn: " + Utilities.formatDate(deadline, "GMT+7", "dd/MM/yyyy HH:mm"));
+      }
+    }
+  }
+  if (urgentList.length > 0) {
+    MailApp.sendEmail({
+      to: Session.getActiveUser().getEmail(),
+      subject: "⚠️ [SlideFlow] Có " + urgentList.length + " đơn hàng sắp tới hạn trong 48h!",
+      body: "Danh sách đơn cần ưu tiên xử lý:\\n\\n" + urgentList.join("\\n")
+    });
+  }
+}`;
+      document.getElementById('gas-code-snippet').value = code;
+    }
     });
 
     function loadSavedState() {
