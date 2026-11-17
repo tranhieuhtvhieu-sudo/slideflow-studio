@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SlideFlow Studio v3.2 — Điều phối Đơn & Báo giá Nội bộ</title>
+  <title>SlideFlow Studio v3.3 — Điều phối Đơn & Báo giá Nội bộ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -67,7 +67,7 @@
           pattern="[0-9]*"
           maxlength="4"
           autocomplete="off"
-          placeholder="Nhập PIN: 2011"
+          placeholder="Nhập PIN 4 số"
           aria-label="Nhập mã PIN 4 số"
           class="w-full text-center text-lg font-extrabold tracking-[0.45em] py-2.5 px-4 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-indigo-600 focus:bg-white focus:outline-none text-slate-900 placeholder:tracking-normal placeholder:font-medium placeholder:text-sm placeholder:text-slate-400 transition"
         />
@@ -91,8 +91,7 @@
       </div>
 
       <div class="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-        <span>Mặc định: <strong class="text-slate-600">2011</strong></span>
-        <button type="button" id="resetPinDefaultBtn" class="text-indigo-600 hover:underline font-semibold">Quên PIN? Đặt lại (2011)</button>
+        <span>PIN được lưu riêng trên trình duyệt này.</span>
       </div>
     </div>
   </div>
@@ -109,7 +108,7 @@
         <div>
           <div class="flex flex-wrap items-center gap-2">
             <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">SlideFlow Studio</h1>
-            <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">v3.2 LIVE</span>
+            <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">v3.3 LIVE</span>
             <button type="button" onclick="copyText('0348107225', 'Đã sao chép STK ZaloPay: 0348107225')" class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200/70 transition flex items-center gap-1" title="Bấm để sao chép STK">
               <span>💳 ZaloPay: 0348107225</span>
             </button>
@@ -541,6 +540,8 @@
           </div>
           <div class="pt-3 border-t border-slate-100 flex flex-wrap gap-2">
             <button type="button" onclick="exportOrdersCsv()" class="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition">⬇️ Xuất CSV</button>
+            <button type="button" onclick="exportBackupJson()" class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition">💾 Sao lưu JSON</button>
+            <label class="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs cursor-pointer">📥 Khôi phục JSON<input type="file" accept="application/json" onchange="importBackupJson(event)" class="hidden" /></label>
             <button type="button" onclick="loadSampleOrders()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">🔄 Nạp dữ liệu mẫu</button>
           </div>
         </div>
@@ -549,7 +550,7 @@
       <!-- RIGHT COLUMN: GOOGLE SHEETS & APPS SCRIPT v3.1 -->
       <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-5 sm:p-6 flex flex-col gap-4">
         <div>
-          <span class="inline-block px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-extrabold uppercase tracking-wider">Automation Google Sheets + Form v3.1</span>
+          <span class="inline-block px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-extrabold uppercase tracking-wider">Automation Google Sheets + Form v3.3</span>
           <h2 class="text-lg font-extrabold text-slate-900 mt-2">Kết nối đồng bộ 2 chiều thời gian thực</h2>
           <p class="text-xs text-slate-500 mt-1">Dán URL Web App từ Google Apps Script để tự động kéo đơn từ Form (chuẩn 29 cột) và đẩy trạng thái <strong>Done</strong> ngược về cột U.</p>
         </div>
@@ -578,9 +579,9 @@
         <!-- Apps Script v3.1 Code Viewer -->
         <div class="mt-1">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-extrabold text-slate-800">Mã Google Apps Script v3.1 (Chuẩn 29 cột Form + Chống lỗi CORS)</span>
+            <span class="text-xs font-extrabold text-slate-800">Mã Google Apps Script v3.3 (Chuẩn 29 cột Form + Chống lỗi CORS)</span>
             <button type="button" onclick="copyGasScriptCode()" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
-              📋 Copy Code v3.1
+              📋 Copy Code v3.3
             </button>
           </div>
           <pre id="gasCodeBlock" class="bg-slate-950 text-emerald-300 text-[11px] leading-relaxed p-4 rounded-2xl overflow-x-auto max-h-80 font-mono select-all"></pre>
@@ -725,13 +726,14 @@
     // 1. SAFE STORAGE & STATE INITIALIZATION
     // =========================================================================
     const STORAGE_KEYS = {
-      PIN: 'sf_studio_pin_v32',
-      SESSION_UNLOCKED: 'sf_studio_unlocked_v32',
-      ORDERS: 'sf_studio_orders_v32',
-      PRICING: 'sf_studio_pricing_v32',
-      BANK: 'sf_studio_bank_v32',
-      GAS_URL: 'sf_studio_gas_url_v32',
-      CUSTOM_QR: 'sf_studio_custom_qr_v32'
+      PIN: 'sf_studio_pin_v33',
+      SESSION_UNLOCKED: 'sf_studio_unlocked_v33',
+      ORDERS: 'sf_studio_orders_v33',
+      PRICING: 'sf_studio_pricing_v33',
+      BANK: 'sf_studio_bank_v33',
+      GAS_URL: 'sf_studio_gas_url_v33',
+      CUSTOM_QR: 'sf_studio_custom_qr_v33',
+      WRITE_KEY: 'sf_studio_write_key_v33'
     };
 
     const DEFAULT_PRICING = {
@@ -751,13 +753,14 @@
     };
 
     const GAS_V31_TEMPLATE = `// ====================================================================
-// SLIDEFLOW STUDIO v3.1 — CHUẨN CỘT GOOGLE FORM & CHỐNG LỖI NGÀY THÁNG
+// SLIDEFLOW STUDIO v3.3 — AN TOÀN GHI TRẠNG THÁI & CHUẨN 29 CỘT
 // ====================================================================
 const SHEET_NAME = "Câu trả lời biểu mẫu 1";
 // (Tùy chọn) Nếu mở Apps Script rời bên ngoài, dán link file Google Sheets vào giữa 2 dấu ngoặc kép:
 const SHEET_URL = "";
 const TELEGRAM_BOT_TOKEN = "";
 const TELEGRAM_CHAT_ID = "";
+const WRITE_KEY = "SF-2026-CHANGE-ME"; // Đổi khóa này và nhập cùng khóa trên web
 
 function safeIsoDate(val) {
   if (!val) return "";
@@ -778,7 +781,7 @@ function doGet(e) {
   const params = (e && e.parameter) ? e.parameter : {};
   const action = params.action || "getOrders";
   const callback = params.callback;
-  let result = { status: "ok", version: "v3.1", orders: [] };
+  let result = { status: "ok", version: "v3.3", orders: [] };
 
   try {
     const ss = SHEET_URL
@@ -858,6 +861,7 @@ function doGet(e) {
       pricing: { ...DEFAULT_PRICING },
       bank: { ...DEFAULT_BANK },
       gasUrl: '',
+      writeKey: '',
       customQr: '',
       statusFilter: 'active',
       quoteCustomItems: [],
@@ -933,7 +937,7 @@ function doGet(e) {
           lockScreen.classList.add('hidden');
           showToast('🔓 Đã mở khóa SlideFlow Studio!', 'success');
         } else {
-          errorMsg.textContent = 'Sai mã PIN! Thử lại (Mặc định: 2011)';
+          errorMsg.textContent = 'Sai mã PIN. Vui lòng thử lại.';
           directInput.value = '';
           syncDots('');
           directInput.focus();
@@ -1000,17 +1004,7 @@ function doGet(e) {
         }
       });
 
-      // 4) Reset PIN to 2011 helper
-      document.getElementById('resetPinDefaultBtn').addEventListener('click', () => {
-        try {
-          localStorage.setItem(STORAGE_KEYS.PIN, '2011');
-        } catch (e) {}
-        handlePinValueChange('');
-        errorMsg.textContent = '';
-        showToast('Đã đặt lại mã PIN về mặc định: 2011', 'info');
-        directInput.focus();
-      });
-
+      // Không cung cấp nút reset PIN công khai.
       setTimeout(() => {
         try { directInput.focus(); } catch (e) {}
       }, 120);
@@ -1325,7 +1319,8 @@ function doGet(e) {
     async function pushStatusToSheet(order, newStatus) {
       if (!state.gasUrl || !order.rowIndex) return;
       const sheetValue = newStatus === 'Done' ? 'Done' : newStatus;
-      const url = `${state.gasUrl}?action=updateStatus&rowIndex=${encodeURIComponent(order.rowIndex)}&newStatus=${encodeURIComponent(sheetValue)}`;
+      const keyPart = state.writeKey ? `&key=${encodeURIComponent(state.writeKey)}` : '';
+      const url = `${state.gasUrl}?action=updateStatus&rowIndex=${encodeURIComponent(order.rowIndex)}&newStatus=${encodeURIComponent(sheetValue)}${keyPart}`;
       try {
         await jsonpRequest(url);
         showToast(`Đã đẩy trạng thái "${newStatus}" về Google Sheets (Dòng ${order.rowIndex})`, 'success');
@@ -1994,6 +1989,7 @@ function doGet(e) {
       document.getElementById('cfgAccountHolder').value = state.bank.accountHolder;
 
       document.getElementById('gasUrlInput').value = state.gasUrl;
+      document.getElementById('writeKeyInput').value = state.writeKey || '';
       document.getElementById('gasCodeBlock').textContent = GAS_V31_TEMPLATE;
       updateTeamShareLink();
     }
@@ -2044,6 +2040,11 @@ function doGet(e) {
       showToast('Đã chuyển về VietQR tự động theo từng đơn!', 'info');
     }
 
+    function saveWriteKey() {
+      state.writeKey = document.getElementById('writeKeyInput').value.trim();
+      safeSetStorage(STORAGE_KEYS.WRITE_KEY, state.writeKey);
+      showToast(state.writeKey ? 'Đã lưu khóa ghi trạng thái trên thiết bị này.' : 'Đã xóa khóa ghi trạng thái.', 'success');
+    }
     function saveAndConnectGas() {
       const url = document.getElementById('gasUrlInput').value.trim();
       if (!url.startsWith('http')) {
@@ -2063,9 +2064,42 @@ function doGet(e) {
     }
 
     function copyGasScriptCode() {
-      copyText(GAS_V31_TEMPLATE, 'Đã sao chép mã Google Apps Script v3.1!');
+      copyText(GAS_V31_TEMPLATE, 'Đã sao chép mã Google Apps Script v3.3!');
     }
 
+    function exportBackupJson() {
+      const backup = { version: 'v3.3', exportedAt: new Date().toISOString(), orders: state.orders, pricing: state.pricing, bank: state.bank };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `SlideFlow_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast('Đã tạo bản sao lưu JSON đầy đủ!', 'success');
+    }
+    function importBackupJson(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (!data || !Array.isArray(data.orders)) throw new Error('File không đúng định dạng SlideFlow');
+          state.orders = data.orders;
+          if (data.pricing) state.pricing = { ...DEFAULT_PRICING, ...data.pricing };
+          if (data.bank) state.bank = { ...DEFAULT_BANK, ...data.bank };
+          safeSetStorage(STORAGE_KEYS.ORDERS, state.orders);
+          safeSetStorage(STORAGE_KEYS.PRICING, state.pricing);
+          safeSetStorage(STORAGE_KEYS.BANK, state.bank);
+          populateSettingsInputs();
+          refreshAllViews();
+          showToast(`Đã khôi phục ${state.orders.length} đơn từ bản sao lưu!`, 'success');
+        } catch (err) {
+          showToast('Không thể khôi phục: ' + err.message, 'error');
+        } finally { event.target.value = ''; }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
     function exportOrdersCsv() {
       const headers = ['Mã đơn', 'Khách hàng', 'Liên hệ', 'Chủ đề', 'Số slide', 'Mức độ', 'Hạn chót', 'Trạng thái', 'Thanh toán', 'Tổng tiền'];
       const lines = [headers.join(',')];
@@ -2154,6 +2188,7 @@ function doGet(e) {
       state.pricing = { ...DEFAULT_PRICING, ...safeGetStorage(STORAGE_KEYS.PRICING, {}) };
       state.bank = { ...DEFAULT_BANK, ...safeGetStorage(STORAGE_KEYS.BANK, {}) };
       state.gasUrl = safeGetStorage(STORAGE_KEYS.GAS_URL, '');
+      state.writeKey = safeGetStorage(STORAGE_KEYS.WRITE_KEY, '');
       state.customQr = safeGetStorage(STORAGE_KEYS.CUSTOM_QR, '');
 
       // 3. Parse ?api= from URL if shared via Team Link
