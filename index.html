@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SlideFlow Studio v3.3 — Điều phối Đơn & Báo giá Nội bộ</title>
+  <title>SlideFlow Studio v3.3.1 CLEAN — Điều phối Đơn & Báo giá Nội bộ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -47,7 +47,7 @@
       <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-extrabold text-xl flex items-center justify-center mx-auto shadow-lg shadow-indigo-500/30">
         SF
       </div>
-      <h1 class="mt-4 text-xl font-extrabold text-slate-900 tracking-tight">SlideFlow Studio <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 align-middle">v3.3</span></h1>
+      <h1 class="mt-4 text-xl font-extrabold text-slate-900 tracking-tight">SlideFlow Studio <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 align-middle">v3.2</span></h1>
       <p class="text-xs text-slate-500 mt-1">Khu vực điều phối nội bộ • Nhập mã PIN 4 số</p>
 
       <!-- 4 PIN Indicator Dots -->
@@ -108,7 +108,7 @@
         <div>
           <div class="flex flex-wrap items-center gap-2">
             <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">SlideFlow Studio</h1>
-            <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">v3.3 LIVE</span>
+            <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">v3.3.1 FINAL</span>
             <button type="button" onclick="copyText('0348107225', 'Đã sao chép STK ZaloPay: 0348107225')" class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200/70 transition flex items-center gap-1" title="Bấm để sao chép STK">
               <span>💳 ZaloPay: 0348107225</span>
             </button>
@@ -127,7 +127,7 @@
 
         <!-- Urgent Bell Button -->
         <button type="button" id="urgentBellBtn" onclick="jumpToUrgentRadar()" class="relative p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 text-slate-700 transition" title="Cảnh báo đơn sắp tới hạn">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.359c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
           <span id="urgentBadgeCount" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center">0</span>
         </button>
 
@@ -542,15 +542,14 @@
             <button type="button" onclick="exportOrdersCsv()" class="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition">⬇️ Xuất CSV</button>
             <button type="button" onclick="exportBackupJson()" class="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition">💾 Sao lưu JSON</button>
             <label class="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs cursor-pointer">📥 Khôi phục JSON<input type="file" accept="application/json" onchange="importBackupJson(event)" class="hidden" /></label>
-            <button type="button" onclick="loadSampleOrders()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">🔄 Nạp dữ liệu mẫu</button>
           </div>
         </div>
       </div>
 
-      <!-- RIGHT COLUMN: GOOGLE SHEETS & APPS SCRIPT v3.3 -->
+      <!-- RIGHT COLUMN: GOOGLE SHEETS & APPS SCRIPT v3.1 -->
       <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-5 sm:p-6 flex flex-col gap-4">
         <div>
-          <span class="inline-block px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-extrabold uppercase tracking-wider">Automation Google Sheets + Form v3.3</span>
+          <span class="inline-block px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-extrabold uppercase tracking-wider">Automation Google Sheets + Form v3.3.1</span>
           <h2 class="text-lg font-extrabold text-slate-900 mt-2">Kết nối đồng bộ 2 chiều thời gian thực</h2>
           <p class="text-xs text-slate-500 mt-1">Dán URL Web App từ Google Apps Script để tự động kéo đơn từ Form (chuẩn 29 cột) và đẩy trạng thái <strong>Done</strong> ngược về cột U.</p>
         </div>
@@ -568,10 +567,10 @@
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1.5">Khóa ghi trạng thái</label>
           <div class="flex flex-col sm:flex-row gap-2">
-            <input id="writeKeyInput" type="password" autocomplete="off" placeholder="Nhập cùng khóa WRITE_KEY trong Apps Script" class="flex-1 px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white" />
-            <button type="button" onclick="saveWriteKey()" class="px-5 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shrink-0 transition">Lưu khóa</button>
+            <input id="writeKeyInput" type="password" autocomplete="off" placeholder="Nhập cùng WRITE_KEY trong Apps Script" class="flex-1 px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-emerald-600" />
+            <button type="button" onclick="saveWriteKey()" class="px-4 py-2.5 rounded-2xl bg-slate-900 text-white font-bold text-xs">Lưu khóa</button>
           </div>
-          <p class="text-[11px] text-slate-400 mt-1">Khóa này chỉ dùng để cập nhật trạng thái về Sheet và không nằm trong Link Team.</p>
+          <p class="text-[11px] text-slate-400 mt-1">Chỉ dùng khi ghi trạng thái về Sheet. Không đưa vào Link Team.</p>
         </div>
         <!-- Team Share Link Box -->
         <div class="rounded-2xl bg-indigo-50/70 border border-indigo-200/80 p-3.5">
@@ -584,12 +583,12 @@
           <input id="teamShareLinkOutput" type="text" readonly class="w-full px-3 py-2 rounded-xl bg-white border border-indigo-200 text-[11px] font-mono text-slate-600 focus:outline-none" />
         </div>
 
-        <!-- Apps Script v3.3 Code Viewer -->
+        <!-- Apps Script v3.1 Code Viewer -->
         <div class="mt-1">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-extrabold text-slate-800">Mã Google Apps Script v3.3 (Chuẩn 29 cột Form + Chống lỗi CORS)</span>
+            <span class="text-xs font-extrabold text-slate-800">Mã Google Apps Script v3.3.1 (Chuẩn 29 cột Form + Chống lỗi CORS)</span>
             <button type="button" onclick="copyGasScriptCode()" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
-              📋 Copy Code v3.3
+              📋 Copy Code v3.3.1
             </button>
           </div>
           <pre id="gasCodeBlock" class="bg-slate-950 text-emerald-300 text-[11px] leading-relaxed p-4 rounded-2xl overflow-x-auto max-h-80 font-mono select-all"></pre>
@@ -734,14 +733,14 @@
     // 1. SAFE STORAGE & STATE INITIALIZATION
     // =========================================================================
     const STORAGE_KEYS = {
-      PIN: 'sf_studio_pin_v33',
-      SESSION_UNLOCKED: 'sf_studio_unlocked_v33',
-      ORDERS: 'sf_studio_orders_v33',
-      PRICING: 'sf_studio_pricing_v33',
-      BANK: 'sf_studio_bank_v33',
-      GAS_URL: 'sf_studio_gas_url_v33',
-      CUSTOM_QR: 'sf_studio_custom_qr_v33',
-      WRITE_KEY: 'sf_studio_write_key_v33'
+      PIN: 'sf_studio_pin_v331',
+      SESSION_UNLOCKED: 'sf_studio_unlocked_v331',
+      ORDERS: 'sf_studio_orders_v331',
+      PRICING: 'sf_studio_pricing_v331',
+      BANK: 'sf_studio_bank_v331',
+      GAS_URL: 'sf_studio_gas_url_v331',
+      CUSTOM_QR: 'sf_studio_custom_qr_v331',
+      WRITE_KEY: 'sf_studio_write_key_v331'
     };
 
     const DEFAULT_PRICING = {
@@ -761,14 +760,14 @@
     };
 
     const GAS_V31_TEMPLATE = `// ====================================================================
-// SLIDEFLOW STUDIO v3.3 — AN TOÀN GHI TRẠNG THÁI & CHUẨN 29 CỘT
+// SLIDEFLOW STUDIO v3.3.1 CLEAN — CHUẨN 29 CỘT & BẢO VỆ GHI TRẠNG THÁI
 // ====================================================================
 const SHEET_NAME = "Câu trả lời biểu mẫu 1";
 // (Tùy chọn) Nếu mở Apps Script rời bên ngoài, dán link file Google Sheets vào giữa 2 dấu ngoặc kép:
 const SHEET_URL = "";
 const TELEGRAM_BOT_TOKEN = "";
 const TELEGRAM_CHAT_ID = "";
-const WRITE_KEY = "SF-2026-CHANGE-ME"; // Đổi khóa này và nhập cùng khóa trên web
+const WRITE_KEY = "SF-CHANGE-ME-331"; // Đổi khóa này, rồi nhập cùng khóa trên web
 
 function safeIsoDate(val) {
   if (!val) return "";
@@ -789,7 +788,7 @@ function doGet(e) {
   const params = (e && e.parameter) ? e.parameter : {};
   const action = params.action || "getOrders";
   const callback = params.callback;
-  let result = { status: "ok", version: "v3.3", orders: [] };
+  let result = { status: "ok", version: "v3.3.1", orders: [] };
 
   try {
     const ss = SHEET_URL
@@ -1012,7 +1011,7 @@ function doGet(e) {
         }
       });
 
-      // Không cung cấp nút reset PIN công khai.
+      // CLEAN: không hiển thị reset PIN mặc định trên giao diện.
       setTimeout(() => {
         try { directInput.focus(); } catch (e) {}
       }, 120);
@@ -1311,9 +1310,8 @@ function doGet(e) {
         };
       });
 
-      // Keep local-only manual orders that don't have a sheet rowIndex
-      const localOnly = state.orders.filter(o => !o.rowIndex);
-      state.orders = [...localOnly, ...merged];
+      // CLEAN FINAL: khi kết nối LIVE, Google Sheet là nguồn dữ liệu duy nhất.
+      state.orders = merged;
       safeSetStorage(STORAGE_KEYS.ORDERS, state.orders);
 
       if (newOrderCount > 0 && !isManual) {
@@ -1337,85 +1335,6 @@ function doGet(e) {
           await fetch(url, { mode: 'no-cors' });
         } catch (err) {}
       }
-    }
-
-    // =========================================================================
-    // 6. SAMPLE DATA (WHEN OFFLINE / FIRST OPEN)
-    // =========================================================================
-    function getDefaultSampleOrders() {
-      const now = Date.now();
-      return [
-        {
-          id: 'sample_1',
-          orderCode: 'DH-101',
-          customerName: 'Lê Hoàng Minh Thư',
-          contact: '0912345678',
-          subject: 'Lịch sử 12',
-          grade: 'Lớp 12',
-          tier: 'student',
-          topic: 'Chiến dịch Điện Biên Phủ 1954 & Ý nghĩa lịch sử',
-          slideCount: 16,
-          urgency: 'Siêu tốc',
-          deadline: new Date(now + 5 * 3600 * 1000).toISOString(),
-          status: 'Đang làm',
-          assignee: 'Hiếu',
-          paymentStatus: 'Đã cọc',
-          addContent: true,
-          addEffect: true,
-          fileLink: 'https://drive.google.com',
-          note: 'Tone đỏ vàng trang trọng, có hiệu ứng chuyển cảnh mượt',
-          customExtras: []
-        },
-        {
-          id: 'sample_2',
-          orderCode: 'DH-102',
-          customerName: 'Trần Quốc Bảo',
-          contact: '0987654321',
-          subject: 'Marketing Căn bản',
-          grade: 'Đại học',
-          tier: 'uni',
-          topic: 'Phân tích chiến lược 4P của Highlands Coffee',
-          slideCount: 22,
-          urgency: 'Gấp',
-          deadline: new Date(now + 30 * 3600 * 1000).toISOString(),
-          status: 'Chưa làm',
-          assignee: 'Team 1',
-          paymentStatus: 'Chưa thanh toán',
-          addContent: false,
-          addEffect: true,
-          fileLink: '',
-          note: 'Đã có sẵn file Word nội dung chi tiết',
-          customExtras: []
-        },
-        {
-          id: 'sample_3',
-          orderCode: 'DH-103',
-          customerName: 'Cô Nguyễn Thu Hà',
-          contact: '0933445566',
-          subject: 'Sinh học 10',
-          grade: 'Giáo viên',
-          tier: 'uni',
-          topic: 'Bài giảng Cấu trúc tế bào nhân thực (Thao giảng)',
-          slideCount: 25,
-          urgency: 'Bình thường',
-          deadline: new Date(now + 76 * 3600 * 1000).toISOString(),
-          status: 'Chờ duyệt',
-          assignee: 'Hiếu',
-          paymentStatus: 'Chưa thanh toán',
-          addContent: true,
-          addEffect: true,
-          fileLink: 'https://drive.google.com',
-          note: 'Cần hình ảnh trực quan dễ hiểu cho học sinh',
-          customExtras: []
-        }
-      ];
-    }
-
-    function loadSampleOrders() {
-      state.orders = getDefaultSampleOrders();
-      safeSetStorage(STORAGE_KEYS.ORDERS, state.orders);
-      refreshAllViews();
-      showToast('Đã nạp 3 đơn hàng mẫu để trải nghiệm!', 'info');
     }
 
     // =========================================================================
@@ -1546,8 +1465,8 @@ function doGet(e) {
       if (!filtered.length) {
         grid.innerHTML = `
           <div class="col-span-full bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
-            <p class="text-sm font-extrabold text-slate-700">Không tìm thấy đơn hàng nào phù hợp bộ lọc</p>
-            <p class="text-xs text-slate-400 mt-1">Thử đổi bộ lọc trạng thái hoặc bấm "+ Thêm đơn" để tạo đơn mới.</p>
+            <p class="text-sm font-extrabold text-slate-700">🎉 Không còn đơn nào cần xử lý</p>
+            <p class="text-xs text-slate-400 mt-1">Chọn “Đã Done” hoặc “Tất cả đơn” để xem lịch sử đơn hàng.</p>
           </div>`;
         return;
       }
@@ -2053,7 +1972,7 @@ function doGet(e) {
       const el = document.getElementById('writeKeyInput');
       state.writeKey = el ? el.value.trim() : '';
       safeSetStorage(STORAGE_KEYS.WRITE_KEY, state.writeKey);
-      showToast(state.writeKey ? 'Đã lưu khóa ghi trạng thái trên thiết bị này.' : 'Đã xóa khóa ghi trạng thái.', 'success');
+      showToast(state.writeKey ? 'Đã lưu khóa ghi trạng thái.' : 'Đã xóa khóa ghi trạng thái.', 'success');
     }
     function saveAndConnectGas() {
       const url = document.getElementById('gasUrlInput').value.trim();
@@ -2074,40 +1993,25 @@ function doGet(e) {
     }
 
     function copyGasScriptCode() {
-      copyText(GAS_V31_TEMPLATE, 'Đã sao chép mã Google Apps Script v3.3!');
+      copyText(GAS_V31_TEMPLATE, 'Đã sao chép mã Google Apps Script v3.1!');
     }
 
     function exportBackupJson() {
-      const backup = { version: 'v3.3', exportedAt: new Date().toISOString(), orders: state.orders, pricing: state.pricing, bank: state.bank };
+      const backup = { version: 'v3.3.1', exportedAt: new Date().toISOString(), orders: state.orders, pricing: state.pricing, bank: state.bank };
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `SlideFlow_Backup_${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      showToast('Đã tạo bản sao lưu JSON đầy đủ!', 'success');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `SlideFlow_Backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href);
+      showToast('Đã tạo bản sao lưu JSON!', 'success');
     }
     function importBackupJson(event) {
-      const file = event.target.files && event.target.files[0];
-      if (!file) return;
+      const file = event.target.files && event.target.files[0]; if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const data = JSON.parse(reader.result);
-          if (!data || !Array.isArray(data.orders)) throw new Error('File không đúng định dạng SlideFlow');
-          state.orders = data.orders;
-          if (data.pricing) state.pricing = { ...DEFAULT_PRICING, ...data.pricing };
-          if (data.bank) state.bank = { ...DEFAULT_BANK, ...data.bank };
-          safeSetStorage(STORAGE_KEYS.ORDERS, state.orders);
-          safeSetStorage(STORAGE_KEYS.PRICING, state.pricing);
-          safeSetStorage(STORAGE_KEYS.BANK, state.bank);
-          populateSettingsInputs();
-          refreshAllViews();
-          showToast(`Đã khôi phục ${state.orders.length} đơn từ bản sao lưu!`, 'success');
-        } catch (err) {
-          showToast('Không thể khôi phục: ' + err.message, 'error');
-        } finally { event.target.value = ''; }
-      };
+      reader.onload = () => { try {
+        const data = JSON.parse(reader.result); if (!data || !Array.isArray(data.orders)) throw new Error('File không đúng định dạng SlideFlow');
+        state.orders = data.orders; if (data.pricing) state.pricing = { ...DEFAULT_PRICING, ...data.pricing }; if (data.bank) state.bank = { ...DEFAULT_BANK, ...data.bank };
+        safeSetStorage(STORAGE_KEYS.ORDERS, state.orders); safeSetStorage(STORAGE_KEYS.PRICING, state.pricing); safeSetStorage(STORAGE_KEYS.BANK, state.bank);
+        populateSettingsInputs(); refreshAllViews(); showToast(`Đã khôi phục ${state.orders.length} đơn!`, 'success');
+      } catch(err) { showToast('Không thể khôi phục: ' + err.message, 'error'); } finally { event.target.value = ''; } };
       reader.readAsText(file, 'utf-8');
     }
     function exportOrdersCsv() {
@@ -2206,9 +2110,7 @@ function doGet(e) {
 
       // 4. Load orders or sample orders
       const savedOrders = safeGetStorage(STORAGE_KEYS.ORDERS, null);
-      state.orders = (Array.isArray(savedOrders) && savedOrders.length > 0)
-        ? savedOrders
-        : getDefaultSampleOrders();
+      state.orders = (Array.isArray(savedOrders) && savedOrders.length > 0) ? savedOrders : [];
 
       // 5. Render UI
       const nowStr = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
