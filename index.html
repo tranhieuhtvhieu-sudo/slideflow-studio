@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SlideFlow Studio v3.2 — Điều phối Đơn & Báo giá Nội bộ</title>
+  <title>SlideFlow Studio v3.3.1 CLEAN FINAL — Điều phối Đơn & Báo giá Nội bộ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -47,7 +47,7 @@
       <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-extrabold text-xl flex items-center justify-center mx-auto shadow-lg shadow-indigo-500/30">
         SF
       </div>
-      <h1 class="mt-4 text-xl font-extrabold text-slate-900 tracking-tight">SlideFlow Studio <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 align-middle">v3.2</span></h1>
+      <h1 class="mt-4 text-xl font-extrabold text-slate-900 tracking-tight">SlideFlow Studio <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 align-middle">v3.3.1</span></h1>
       <p class="text-xs text-slate-500 mt-1">Khu vực điều phối nội bộ • Nhập mã PIN 4 số</p>
 
       <!-- 4 PIN Indicator Dots -->
@@ -109,7 +109,7 @@
         <div>
           <div class="flex flex-wrap items-center gap-2">
             <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">SlideFlow Studio</h1>
-            <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">v3.2 LIVE</span>
+            <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">v3.3.1 CLEAN</span>
             <button type="button" onclick="copyText('0348107225', 'Đã sao chép STK ZaloPay: 0348107225')" class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200/70 transition flex items-center gap-1" title="Bấm để sao chép STK">
               <span>💳 ZaloPay: 0348107225</span>
             </button>
@@ -861,7 +861,6 @@ function doGet(e) {
       customQr: '',
       statusFilter: 'active',
       quoteCustomItems: [],
-      pollTimer: null,
       countdownTimer: null
     };
 
@@ -1002,12 +1001,8 @@ function doGet(e) {
 
       // 4) Reset PIN to 2011 helper
       document.getElementById('resetPinDefaultBtn').addEventListener('click', () => {
-        try {
-          localStorage.setItem(STORAGE_KEYS.PIN, '2011');
-        } catch (e) {}
         handlePinValueChange('');
-        errorMsg.textContent = '';
-        showToast('Đã đặt lại mã PIN về mặc định: 2011', 'info');
+        errorMsg.textContent = 'PIN đang được lưu trên server. Hãy đổi PIN trong tab Cài đặt.';
         directInput.focus();
       });
 
@@ -1031,17 +1026,17 @@ function doGet(e) {
       setTimeout(() => directInput.focus(), 100);
     }
 
-    function changeStudioPin() {
+    async function changeStudioPin() {
       const val = document.getElementById('newPinInput').value.trim();
-      if (!/^\d{4}$/.test(val)) {
-        showToast('Mã PIN mới phải gồm đúng 4 chữ số!', 'error');
-        return;
-      }
+      if (!/^\d{4}$/.test(val)) return showToast('Mã PIN mới phải gồm đúng 4 chữ số!', 'error');
+      if (!state.gasUrl) return showToast('Hãy kết nối server trước khi đổi PIN.', 'warning');
       try {
-        localStorage.setItem(STORAGE_KEYS.PIN, val);
-      } catch (e) {}
-      document.getElementById('newPinInput').value = '';
-      showToast('Đã đổi mã PIN nội bộ thành công!', 'success');
+        const payload = await jsonpRequest(`${state.gasUrl}?action=savePin&pin=${encodeURIComponent(val)}`);
+        if (!payload || payload.status !== 'ok') throw new Error((payload && payload.message) || 'Server không lưu được PIN');
+        try { localStorage.setItem(STORAGE_KEYS.PIN, val); } catch (e) {}
+        document.getElementById('newPinInput').value = '';
+        showToast('Đã đổi PIN và lưu lên server!', 'success');
+      } catch (err) { showToast('Không đổi được PIN: ' + err.message, 'error'); }
     }
 
     // =========================================================================
@@ -1122,25 +1117,22 @@ function doGet(e) {
     // 4. ORDER PRICING CALCULATOR
     // =========================================================================
     function calculateOrderTotal(order) {
+      if (order.rowIndex) return Number(order.totalPrice) || 0;
       const p = state.pricing;
       const unitRate = order.tier === 'student' ? Number(p.studentPrice) : Number(p.uniPrice);
       const baseFee = (Number(order.slideCount) || 0) * unitRate;
-
       const urgLower = String(order.urgency || '').toLowerCase();
       let rushFee = 0;
-      if (urgLower.includes('siêu tốc') || urgLower === 'super') rushFee = Number(p.superFee);
-      else if (urgLower.includes('gấp') || urgLower === 'urgent') rushFee = Number(p.urgentFee);
-
-      const contentFee = order.addContent ? Number(p.contentFee) : 0;
-      const effectFee = order.addEffect ? Number(p.effectFee) : 0;
+      if (urgLower.includes('siêu tốc') || urgLower === 'super') rushFee = Number(p.superFee) || 0;
+      else if (urgLower.includes('gấp') || urgLower === 'urgent') rushFee = Number(p.urgentFee) || 0;
+      const contentFee = order.addContent ? Number(p.contentFee) || 0 : 0;
+      const effectFee = order.addEffect ? Number(p.effectFee) || 0 : 0;
       const extrasTotal = (order.customExtras || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-
-      const calculated = Math.max(0, baseFee + rushFee + contentFee + effectFee + extrasTotal);
-      return calculated > 0 ? calculated : (Number(order.totalPrice) || 0);
+      return Math.max(0, baseFee + rushFee + contentFee + effectFee + extrasTotal);
     }
 
     // =========================================================================
-    // 5. GOOGLE SHEETS 2-WAY REAL-TIME SYNC (JSONP + FETCH FALLBACK)
+    // 5. GOOGLE SHEETS EVENT-DRIVEN SYNC (NO 15s POLLING)
     // =========================================================================
     function parseApiUrlFromLocation() {
       try {
@@ -1243,6 +1235,14 @@ function doGet(e) {
         }
 
         const remoteOrders = Array.isArray(payload.orders) ? payload.orders : [];
+        if (payload.pricing) state.pricing = { ...DEFAULT_PRICING, ...payload.pricing };
+        if (payload.bank) state.bank = { ...DEFAULT_BANK, ...payload.bank };
+        if (payload.pin && /^\d{4}$/.test(String(payload.pin))) {
+          try { localStorage.setItem(STORAGE_KEYS.PIN, String(payload.pin)); } catch (e) {}
+        }
+        safeSetStorage(STORAGE_KEYS.PRICING, state.pricing);
+        safeSetStorage(STORAGE_KEYS.BANK, state.bank);
+        populateSettingsInputs();
         mergeRemoteOrders(remoteOrders, isManual);
         setSyncPill('live', `LIVE | Đã đồng bộ ${remoteOrders.length} đơn`);
         if (isManual) {
@@ -1290,7 +1290,11 @@ function doGet(e) {
           tier: r.tier === 'student' ? 'student' : 'uni',
           grade: r.grade || '',
           topic: r.topic || 'Thiết kế Slide theo yêu cầu',
-          slideCount: prev ? prev.slideCount : (Number(r.slideCount) || 10),
+          slideCount: Math.max(0, Number(r.slideCount) || 0),
+          unitPrice: Number(r.unitPrice) || 0,
+          baseFee: Number(r.baseFee) || 0,
+          rushFee: Number(r.rushFee) || 0,
+          contentEffectFee: Number(r.contentEffectFee) || 0,
           contentStatus: r.contentStatus || '',
           fileLink: r.fileLink || '',
           style: r.style || '',
@@ -1324,15 +1328,14 @@ function doGet(e) {
 
     async function pushStatusToSheet(order, newStatus) {
       if (!state.gasUrl || !order.rowIndex) return;
-      const sheetValue = newStatus === 'Done' ? 'Done' : newStatus;
-      const url = `${state.gasUrl}?action=updateStatus&rowIndex=${encodeURIComponent(order.rowIndex)}&newStatus=${encodeURIComponent(sheetValue)}`;
+      const url = `${state.gasUrl}?action=updateStatus&rowIndex=${encodeURIComponent(order.rowIndex)}&newStatus=${encodeURIComponent(newStatus)}`;
       try {
-        await jsonpRequest(url);
-        showToast(`Đã đẩy trạng thái "${newStatus}" về Google Sheets (Dòng ${order.rowIndex})`, 'success');
-      } catch (e) {
-        try {
-          await fetch(url, { mode: 'no-cors' });
-        } catch (err) {}
+        const payload = await jsonpRequest(url);
+        if (!payload || payload.status !== 'ok') throw new Error((payload && payload.message) || 'Không cập nhật được trạng thái');
+        showToast(`Đã cập nhật ${order.orderCode} → "${newStatus}"`, 'success');
+        await syncFromGoogleSheets(false);
+      } catch (err) {
+        showToast('Không cập nhật được trạng thái: ' + err.message, 'error');
       }
     }
 
@@ -1611,7 +1614,7 @@ function doGet(e) {
             <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
               <div class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
                 <span class="text-slate-500 font-medium">Số slide:</span>
-                <input type="number" min="1" value="${o.slideCount}" onchange="updateOrderSlideCount('${o.id}', this.value)" class="w-12 text-right font-extrabold text-indigo-700 bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 focus:outline-none focus:border-indigo-500" />
+                <span class="font-extrabold text-indigo-700">${o.slideCount}</span>
               </div>
               <div class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
                 <span class="text-slate-500 font-medium">Hạn giao:</span>
@@ -1999,8 +2002,9 @@ function doGet(e) {
       updateTeamShareLink();
     }
 
-    function savePricingSettings() {
-      state.pricing = {
+    async function savePricingSettings() {
+      if (!state.gasUrl) return showToast('Hãy kết nối Google Apps Script trước khi lưu bảng giá.', 'warning');
+      const pricing = {
         studentPrice: Number(document.getElementById('cfgStudentPrice').value) || 2000,
         uniPrice: Number(document.getElementById('cfgUniPrice').value) || 5000,
         superFee: Number(document.getElementById('cfgSuperFee').value) || 15000,
@@ -2008,21 +2012,34 @@ function doGet(e) {
         contentFee: Number(document.getElementById('cfgContentFee').value) || 10000,
         effectFee: Number(document.getElementById('cfgEffectFee').value) || 10000
       };
-      safeSetStorage(STORAGE_KEYS.PRICING, state.pricing);
-      refreshAllViews();
-      showToast('Đã lưu bảng giá mặc định!', 'success');
+      const params = new URLSearchParams({ action: 'savePricing', ...pricing });
+      try {
+        const payload = await jsonpRequest(`${state.gasUrl}?${params.toString()}`);
+        if (!payload || payload.status !== 'ok') throw new Error((payload && payload.message) || 'Server không lưu được bảng giá');
+        state.pricing = { ...DEFAULT_PRICING, ...payload.pricing };
+        safeSetStorage(STORAGE_KEYS.PRICING, state.pricing);
+        refreshAllViews();
+        showToast('Đã lưu bảng giá lên server và đồng bộ thiết bị!', 'success');
+      } catch (err) { showToast('Không lưu được bảng giá: ' + err.message, 'error'); }
     }
 
-    function saveBankSettings() {
-      state.bank = {
-        bankBin: document.getElementById('cfgBankBin').value.trim() || '970454',
-        bankLabel: document.getElementById('cfgBankLabel').value.trim() || 'Ví ZaloPay (970454)',
-        accountNo: document.getElementById('cfgAccountNo').value.trim() || '0348107225',
-        accountHolder: (document.getElementById('cfgAccountHolder').value.trim() || 'NGUYEN VAN BAC').toUpperCase()
+    async function saveBankSettings() {
+      if (!state.gasUrl) return showToast('Hãy kết nối Google Apps Script trước.', 'warning');
+      const bank = {
+        bankBin: document.getElementById('cfgBankBin').value.trim(),
+        bankLabel: document.getElementById('cfgBankLabel').value.trim(),
+        accountNo: document.getElementById('cfgAccountNo').value.trim(),
+        accountHolder: document.getElementById('cfgAccountHolder').value.trim().toUpperCase()
       };
-      safeSetStorage(STORAGE_KEYS.BANK, state.bank);
-      updateQuotePreview();
-      showToast('Đã lưu thông tin tài khoản nhận tiền!', 'success');
+      const params = new URLSearchParams({ action: 'saveBank', ...bank });
+      try {
+        const payload = await jsonpRequest(`${state.gasUrl}?${params.toString()}`);
+        if (!payload || payload.status !== 'ok') throw new Error((payload && payload.message) || 'Server không lưu được thông tin nhận tiền');
+        state.bank = { ...DEFAULT_BANK, ...payload.bank };
+        safeSetStorage(STORAGE_KEYS.BANK, state.bank);
+        updateQuotePreview();
+        showToast('Đã lưu thông tin nhận tiền lên server!', 'success');
+      } catch (err) { showToast('Không lưu được thông tin nhận tiền: ' + err.message, 'error'); }
     }
 
     function handleCustomQrUpload(e) {
@@ -2147,6 +2164,13 @@ function doGet(e) {
     // =========================================================================
     // 12. BOOTSTRAP ON DOMContentLoaded
     // =========================================================================
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && state.gasUrl) syncFromGoogleSheets(false);
+    });
+    window.addEventListener('focus', () => {
+      if (state.gasUrl) syncFromGoogleSheets(false);
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
       // 1. Initialize PIN Lock immediately so nothing can block it
       initPinLock();
@@ -2173,13 +2197,10 @@ function doGet(e) {
       populateSettingsInputs();
       refreshAllViews();
 
-      // 6. Start real-time sync & 30s countdown tick
+      // 6. Initial server sync + local 30s countdown tick (không polling Sheet)
       if (state.gasUrl) {
         syncFromGoogleSheets(false);
       }
-      state.pollTimer = setInterval(() => {
-        if (state.gasUrl) syncFromGoogleSheets(false);
-      }, 15000);
 
       state.countdownTimer = setInterval(() => {
         updateRadarAndKpis();
